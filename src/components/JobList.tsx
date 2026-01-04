@@ -1,4 +1,4 @@
-import { Briefcase, List, Grid } from 'lucide-react';
+import { Briefcase, List, Grid, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Job } from '@/types';
 import JobCard from './JobCard';
@@ -8,13 +8,25 @@ interface JobListProps {
   jobs: Job[];
   selectedJob: Job | null;
   onJobSelect: (job: Job) => void;
+  isLoading?: boolean;
 }
 
-const JobList = ({ jobs, selectedJob, onJobSelect }: JobListProps) => {
+const JobList = ({ jobs, selectedJob, onJobSelect, isLoading }: JobListProps) => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const featuredJobs = jobs.filter(job => job.isFeatured);
   const regularJobs = jobs.filter(job => !job.isFeatured);
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">Loading jobs...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">

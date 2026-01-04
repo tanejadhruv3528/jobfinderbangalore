@@ -1,11 +1,12 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, Building2, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Mail, Lock, Building2, Eye, EyeOff, ArrowRight, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 
 const Auth = () => {
@@ -13,26 +14,66 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [companyName, setCompanyName] = useState('');
+  const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const { user, signIn, signUp } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      const from = (location.state as any)?.from?.pathname || '/admin';
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate authentication
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      if (isLogin) {
+        const { error } = await signIn(email, password);
+        if (error) {
+          toast({
+            title: 'Sign in failed',
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Welcome back!',
+            description: 'You have successfully logged in.',
+          });
+          navigate('/admin');
+        }
+      } else {
+        const { error } = await signUp(email, password, fullName);
+        if (error) {
+          toast({
+            title: 'Sign up failed',
+            description: error.message,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Account created!',
+            description: 'Your employer account has been created.',
+          });
+          navigate('/admin');
+        }
+      }
+    } catch (error) {
       toast({
-        title: isLogin ? 'Welcome back!' : 'Account created!',
-        description: isLogin 
-          ? 'You have successfully logged in.' 
-          : 'Your employer account has been created.',
+        title: 'Error',
+        description: 'Something went wrong. Please try again.',
+        variant: 'destructive',
       });
-      navigate('/admin');
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -60,17 +101,16 @@ const Auth = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {!isLogin && (
                   <div className="space-y-2">
-                    <Label htmlFor="company">Company Name</Label>
+                    <Label htmlFor="fullName">Full Name</Label>
                     <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
-                        id="company"
+                        id="fullName"
                         type="text"
-                        placeholder="Your Company"
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
+                        placeholder="John Smith"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                         className="pl-10"
-                        required={!isLogin}
                       />
                     </div>
                   </div>
@@ -104,6 +144,7 @@ const Auth = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10 pr-10"
                       required
+                      minLength={6}
                     />
                     <button
                       type="button"

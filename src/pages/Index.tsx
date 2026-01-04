@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
@@ -6,7 +6,9 @@ import FilterSidebar from '@/components/FilterSidebar';
 import JobMap from '@/components/JobMap';
 import JobList from '@/components/JobList';
 import { FilterState, Job } from '@/types';
+import { fetchJobs } from '@/services/jobService';
 import { getJobsWithDetails } from '@/data/mockData';
+import { useQuery } from '@tanstack/react-query';
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -19,8 +21,19 @@ const Index = () => {
     searchQuery: '',
   });
 
-  // Get jobs with company and location data
-  const allJobs = useMemo(() => getJobsWithDetails(), []);
+  // Fetch jobs from database
+  const { data: dbJobs, isLoading } = useQuery({
+    queryKey: ['jobs'],
+    queryFn: fetchJobs,
+  });
+
+  // Fall back to mock data if no jobs in database
+  const allJobs = useMemo(() => {
+    if (dbJobs && dbJobs.length > 0) {
+      return dbJobs;
+    }
+    return getJobsWithDetails();
+  }, [dbJobs]);
 
   // Filter jobs based on current filters
   const filteredJobs = useMemo(() => {
@@ -108,6 +121,7 @@ const Index = () => {
               jobs={filteredJobs}
               selectedJob={selectedJob}
               onJobSelect={setSelectedJob}
+              isLoading={isLoading}
             />
           </div>
         </div>
