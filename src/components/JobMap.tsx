@@ -3,7 +3,7 @@ import { Navigation, Loader2 } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from '@/components/ui/button';
-import { Location } from '@/types';
+import { Location, Job } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 // Mapbox public access token
@@ -14,13 +14,16 @@ const DEFAULT_CENTER: [number, number] = [77.5946, 12.9716]; // [lng, lat]
 const DEFAULT_ZOOM = 11;
 
 interface JobMapProps {
+  jobs: Job[];
+  selectedLocationId: string | null;
+  onLocationSelect: (locationId: string | null) => void;
   userLocation: { lat: number; lng: number } | null;
 }
 
-const JobMap = ({ userLocation }: JobMapProps) => {
+const JobMap = ({ jobs, selectedLocationId, onLocationSelect, userLocation }: JobMapProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const markersRef = useRef<Map<string, { marker: mapboxgl.Marker; element: HTMLDivElement }>>(new Map());
   const [isLocating, setIsLocating] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -83,8 +86,8 @@ const JobMap = ({ userLocation }: JobMapProps) => {
     if (!map.current || !mapLoaded) return;
 
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
+    markersRef.current.forEach(({ marker }) => marker.remove());
+    markersRef.current.clear();
 
     // Add markers for each unique location
     locations.forEach((location) => {
@@ -103,15 +106,47 @@ const JobMap = ({ userLocation }: JobMapProps) => {
         border: 3px solid hsl(var(--background));
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
       `;
+
+      el.addEventListener('click', () => {
+        onLocationSelect(location.id);
+      });
 
       const marker = new mapboxgl.Marker(el)
         .setLngLat([lng, lat])
         .addTo(map.current!);
 
-      markersRef.current.push(marker);
+      markersRef.current.set(location.id, { marker, element: el });
     });
-  }, [locations, mapLoaded]);
+  }, [locations, mapLoaded, onLocationSelect]);
+
+  // Handle marker highlight when selectedLocationId changes
+  useEffect(() => {
+    markersRef.current.forEach(({ element }, locationId) => {
+      if (locationId === selectedLocationId) {
+        element.style.transform = 'scale(1.3)';
+        element.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+        element.style.zIndex = '10';
+      } else {
+        element.style.transform = 'scale(1)';
+        element.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+        element.style.zIndex = '1';
+      }
+    });
+
+    // Center map on selected location
+    if (selectedLocationId && map.current) {
+      const location = locations.find(loc => loc.id === selectedLocationId);
+      if (location) {
+        map.current.flyTo({
+          center: [location.longitude, location.latitude],
+          zoom: 13,
+          duration: 500,
+        });
+      }
+    }
+  }, [selectedLocationId, locations]);
 
   // Handle locate me
   const handleLocateMe = () => {

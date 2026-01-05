@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
@@ -12,7 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     distance: 50,
@@ -73,11 +73,21 @@ const Index = () => {
           });
         },
         () => {
-          // Default to San Francisco if geolocation fails
-          setUserLocation({ lat: 37.7749, lng: -122.4194 });
+          // Default to Bangalore if geolocation fails
+          setUserLocation({ lat: 12.9716, lng: 77.5946 });
         }
       );
     }
+  }, []);
+
+  // Handle job card click - select its location
+  const handleJobSelect = useCallback((job: Job) => {
+    setSelectedLocationId(job.locationId);
+  }, []);
+
+  // Handle location select from map
+  const handleLocationSelect = useCallback((locationId: string | null) => {
+    setSelectedLocationId(locationId);
   }, []);
 
   return (
@@ -108,6 +118,9 @@ const Index = () => {
           {/* Map */}
           <div className="flex-1 h-[50vh] lg:h-auto">
             <JobMap
+              jobs={filteredJobs}
+              selectedLocationId={selectedLocationId}
+              onLocationSelect={handleLocationSelect}
               userLocation={userLocation}
             />
           </div>
@@ -116,8 +129,8 @@ const Index = () => {
           <div className="w-full lg:w-96 h-[50vh] lg:h-auto bg-card border-l border-border overflow-hidden">
             <JobList
               jobs={filteredJobs}
-              selectedJob={selectedJob}
-              onJobSelect={setSelectedJob}
+              selectedLocationId={selectedLocationId}
+              onJobSelect={handleJobSelect}
               isLoading={isLoading}
             />
           </div>

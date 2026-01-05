@@ -2,20 +2,42 @@ import { Briefcase, List, Grid, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Job } from '@/types';
 import JobCard from './JobCard';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface JobListProps {
   jobs: Job[];
-  selectedJob: Job | null;
+  selectedLocationId: string | null;
   onJobSelect: (job: Job) => void;
   isLoading?: boolean;
 }
 
-const JobList = ({ jobs, selectedJob, onJobSelect, isLoading }: JobListProps) => {
+const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading }: JobListProps) => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const jobRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const featuredJobs = jobs.filter(job => job.isFeatured);
   const regularJobs = jobs.filter(job => !job.isFeatured);
+
+  // Scroll to first highlighted job when selectedLocationId changes
+  useEffect(() => {
+    if (!selectedLocationId) return;
+
+    const firstMatchingJob = jobs.find(job => job.locationId === selectedLocationId);
+    if (firstMatchingJob) {
+      const element = jobRefs.current.get(firstMatchingJob.id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [selectedLocationId, jobs]);
+
+  const setJobRef = (jobId: string) => (el: HTMLDivElement | null) => {
+    if (el) {
+      jobRefs.current.set(jobId, el);
+    } else {
+      jobRefs.current.delete(jobId);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -75,8 +97,10 @@ const JobList = ({ jobs, selectedJob, onJobSelect, isLoading }: JobListProps) =>
                 {featuredJobs.map(job => (
                   <JobCard
                     key={job.id}
+                    ref={setJobRef(job.id)}
                     job={job}
                     isCompact={viewMode === 'list'}
+                    isHighlighted={job.locationId === selectedLocationId}
                     onSelect={onJobSelect}
                   />
                 ))}
@@ -94,8 +118,10 @@ const JobList = ({ jobs, selectedJob, onJobSelect, isLoading }: JobListProps) =>
                 {regularJobs.map(job => (
                   <JobCard
                     key={job.id}
+                    ref={setJobRef(job.id)}
                     job={job}
                     isCompact={viewMode === 'list'}
+                    isHighlighted={job.locationId === selectedLocationId}
                     onSelect={onJobSelect}
                   />
                 ))}
