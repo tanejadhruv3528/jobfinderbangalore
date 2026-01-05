@@ -108,9 +108,6 @@ const Index = () => {
           {/* Map */}
           <div className="flex-1 h-[50vh] lg:h-auto">
             <JobMap
-              jobs={filteredJobs}
-              selectedJob={selectedJob}
-              onJobSelect={setSelectedJob}
               userLocation={userLocation}
             />
           </div>
