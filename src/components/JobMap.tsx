@@ -1,8 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
-import { MapPin, Navigation, Loader2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Navigation, Loader2 } from 'lucide-react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from '@/components/ui/button';
 import { Job } from '@/types';
 import JobCard from './JobCard';
+
+// Mapbox public access token
+const MAPBOX_TOKEN = 'pk.eyJ1IjoidGFuZWphLWRocnV2IiwiYSI6ImNtazFrYmw0NzA1OWUzZHF3NWczYnN0NHcifQ.-ZdRZgv8qdygmFOjPQwY2w';
+
+// Default center: Bangalore, India
+const DEFAULT_CENTER: [number, number] = [77.5946, 12.9716]; // [lng, lat]
+const DEFAULT_ZOOM = 11;
 
 interface JobMapProps {
   jobs: Job[];
@@ -12,96 +21,126 @@ interface JobMapProps {
 }
 
 const JobMap = ({ jobs, selectedJob, onJobSelect, userLocation }: JobMapProps) => {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [isLocating, setIsLocating] = useState(false);
-  const [mapCenter, setMapCenter] = useState(userLocation || { lat: 37.7749, lng: -122.4194 });
-
-  const handleLocateMe = () => {
-    setIsLocating(true);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setMapCenter({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-          setIsLocating(false);
-        },
-        () => setIsLocating(false)
-      );
-    }
-  };
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Group jobs by location
   const jobsByLocation = jobs.reduce((acc, job) => {
     if (!job.location) return acc;
-    const key = `${job.location.latitude}-${job.location.longitude}`;
+    const lat = Number(job.location.latitude);
+    const lng = Number(job.location.longitude);
+    if (isNaN(lat) || isNaN(lng)) return acc;
+    
+    const key = `${lat}-${lng}`;
     if (!acc[key]) {
       acc[key] = {
-        location: job.location,
+        lat,
+        lng,
         jobs: [],
       };
     }
     acc[key].jobs.push(job);
     return acc;
-  }, {} as Record<string, { location: NonNullable<Job['location']>; jobs: Job[] }>);
+  }, {} as Record<string, { lat: number; lng: number; jobs: Job[] }>);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
+    });
+
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    map.current.on('load', () => {
+      setMapLoaded(true);
+    });
+
+    return () => {
+      map.current?.remove();
+      map.current = null;
+    };
+  }, []);
+
+  // Update markers when jobs change
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    // Clear existing markers
+    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current = [];
+
+    // Add new markers
+    Object.entries(jobsByLocation).forEach(([key, { lat, lng, jobs: locationJobs }]) => {
+      const el = document.createElement('div');
+      el.className = 'mapbox-marker';
+      el.style.cssText = `
+        width: 32px;
+        height: 32px;
+        background: hsl(var(--primary));
+        border-radius: 50%;
+        border: 3px solid hsl(var(--background));
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: hsl(var(--primary-foreground));
+        font-weight: 600;
+        font-size: 12px;
+      `;
+      el.textContent = locationJobs.length > 1 ? String(locationJobs.length) : '';
+
+      el.addEventListener('click', () => {
+        onJobSelect(locationJobs[0]);
+      });
+
+      const marker = new mapboxgl.Marker(el)
+        .setLngLat([lng, lat])
+        .addTo(map.current!);
+
+      markersRef.current.push(marker);
+    });
+  }, [jobs, mapLoaded, onJobSelect]);
+
+  // Handle locate me
+  const handleLocateMe = () => {
+    setIsLocating(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          map.current?.flyTo({
+            center: [longitude, latitude],
+            zoom: 13,
+          });
+          setIsLocating(false);
+        },
+        () => setIsLocating(false)
+      );
+    } else {
+      setIsLocating(false);
+    }
+  };
 
   return (
-    <div className="relative w-full h-full bg-muted rounded-xl overflow-hidden">
-      {/* Map placeholder with grid */}
-      <div className="absolute inset-0 bg-gradient-to-br from-accent/30 to-muted">
-        <div 
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `
-              linear-gradient(hsl(var(--border)) 1px, transparent 1px),
-              linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px)
-            `,
-            backgroundSize: '50px 50px',
-          }}
-        />
-        
-        {/* Decorative map elements */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-24 h-24 gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-glow animate-pulse-soft">
-              <MapPin className="w-12 h-12 text-primary-foreground" />
-            </div>
-            <p className="text-muted-foreground text-sm font-medium">
-              Map integration ready
-            </p>
-            <p className="text-muted-foreground/70 text-xs mt-1">
-              Add your Mapbox token to enable
-            </p>
-          </div>
-        </div>
-
-        {/* Job markers */}
-        {Object.entries(jobsByLocation).map(([key, { location, jobs: locationJobs }]) => {
-          const hasFeatured = locationJobs.some(j => j.isFeatured);
-          const offsetX = (location.longitude + 122.5) * 300;
-          const offsetY = (37.9 - location.latitude) * 500;
-          
-          return (
-            <button
-              key={key}
-              className={`absolute job-marker ${hasFeatured ? 'featured' : ''}`}
-              style={{
-                left: `${Math.max(5, Math.min(90, 20 + offsetX))}%`,
-                top: `${Math.max(10, Math.min(85, 20 + offsetY))}%`,
-              }}
-              onClick={() => onJobSelect(locationJobs[0])}
-            >
-              <span className="job-marker-count">{locationJobs.length}</span>
-            </button>
-          );
-        })}
-      </div>
+    <div className="relative w-full h-full rounded-xl overflow-hidden">
+      <div ref={mapContainer} className="absolute inset-0" />
 
       {/* Locate me button */}
       <Button
         variant="secondary"
         size="icon"
-        className="absolute bottom-4 right-4 shadow-lg"
+        className="absolute bottom-4 right-4 shadow-lg z-10"
         onClick={handleLocateMe}
         disabled={isLocating}
       >
@@ -114,11 +153,8 @@ const JobMap = ({ jobs, selectedJob, onJobSelect, userLocation }: JobMapProps) =
 
       {/* Selected job popup */}
       {selectedJob && (
-        <div className="absolute bottom-4 left-4 right-16 max-w-md animate-slide-up">
-          <JobCard 
-            job={selectedJob} 
-            onSelect={() => {}} 
-          />
+        <div className="absolute bottom-4 left-4 right-16 max-w-md z-10 animate-slide-up">
+          <JobCard job={selectedJob} onSelect={() => {}} />
           <Button
             variant="ghost"
             size="sm"
