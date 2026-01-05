@@ -8,7 +8,7 @@ export interface Company {
 
 export interface Location {
   id: string;
-  companyId: string;
+  companyId: string | null;
   address: string;
   city: string;
   latitude: number;
