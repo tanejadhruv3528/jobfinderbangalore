@@ -104,17 +104,17 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {job.description}
                 </p>
-
-                <Button 
-                  variant="apply" 
-                  className="w-full mt-4"
-                  onClick={handleApply}
-                >
-                  Apply Now
-                  <ExternalLink className="w-4 h-4" />
-                </Button>
               </>
             )}
+
+            <Button 
+              variant="apply" 
+              className={`w-full ${isCompact ? 'mt-2' : 'mt-4'}`}
+              onClick={handleApply}
+            >
+              Apply Now
+              <ExternalLink className="w-4 h-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
