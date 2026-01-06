@@ -132,6 +132,7 @@ const Index = () => {
               selectedLocationId={selectedLocationId}
               onJobSelect={handleJobSelect}
               isLoading={isLoading}
+              userLocation={userLocation}
             />
           </div>
         </div>

@@ -2,18 +2,39 @@ import { Briefcase, List, Grid, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Job } from '@/types';
 import JobCard from './JobCard';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { calculateDistance, formatDistance } from '@/lib/distance';
 
 interface JobListProps {
   jobs: Job[];
   selectedLocationId: string | null;
   onJobSelect: (job: Job) => void;
   isLoading?: boolean;
+  userLocation: { lat: number; lng: number } | null;
 }
 
-const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading }: JobListProps) => {
+const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocation }: JobListProps) => {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const jobRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  // Calculate distances for each job
+  const jobDistances = useMemo(() => {
+    const distances = new Map<string, number>();
+    if (!userLocation) return distances;
+    
+    jobs.forEach(job => {
+      if (job.location?.latitude && job.location?.longitude) {
+        const dist = calculateDistance(
+          userLocation.lat,
+          userLocation.lng,
+          job.location.latitude,
+          job.location.longitude
+        );
+        distances.set(job.id, dist);
+      }
+    });
+    return distances;
+  }, [jobs, userLocation]);
 
   const featuredJobs = jobs.filter(job => job.isFeatured);
   const regularJobs = jobs.filter(job => !job.isFeatured);
@@ -102,6 +123,7 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading }: JobListPr
                     isCompact={viewMode === 'list'}
                     isHighlighted={job.locationId === selectedLocationId}
                     onSelect={onJobSelect}
+                    distance={jobDistances.get(job.id)}
                   />
                 ))}
               </>
@@ -123,6 +145,7 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading }: JobListPr
                     isCompact={viewMode === 'list'}
                     isHighlighted={job.locationId === selectedLocationId}
                     onSelect={onJobSelect}
+                    distance={jobDistances.get(job.id)}
                   />
                 ))}
               </>
