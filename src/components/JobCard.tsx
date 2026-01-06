@@ -1,15 +1,17 @@
-import { MapPin, Clock, DollarSign, Briefcase, ExternalLink, Star } from 'lucide-react';
+import { MapPin, Clock, DollarSign, Briefcase, ExternalLink, Star, Navigation } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Job } from '@/types';
 import { forwardRef } from 'react';
+import { formatDistance } from '@/lib/distance';
 
 interface JobCardProps {
   job: Job;
   isCompact?: boolean;
   isHighlighted?: boolean;
   onSelect?: (job: Job) => void;
+  distance?: number;
 }
 
 const getJobTypeBadgeVariant = (jobType: string) => {
@@ -23,7 +25,7 @@ const getJobTypeBadgeVariant = (jobType: string) => {
 };
 
 const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
-  ({ job, isCompact = false, isHighlighted = false, onSelect }, ref) => {
+  ({ job, isCompact = false, isHighlighted = false, onSelect, distance }, ref) => {
     const handleApply = (e: React.MouseEvent) => {
       e.stopPropagation();
       window.open(job.applyUrl, '_blank', 'noopener,noreferrer');
@@ -76,6 +78,12 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
                 <MapPin className="w-4 h-4 text-primary" />
                 {job.location?.city}
               </span>
+              {distance !== undefined && (
+                <span className="flex items-center gap-1.5 text-primary font-medium">
+                  <Navigation className="w-4 h-4" />
+                  {formatDistance(distance)}
+                </span>
+              )}
               <span className="flex items-center gap-1.5">
                 <Clock className="w-4 h-4" />
                 {job.experience}
