@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { Navigation, Loader2 } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button } from '@/components/ui/button';
 import { Location, Job } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
 
 // Mapbox public access token
 const MAPBOX_TOKEN = 'pk.eyJ1IjoidGFuZWphLWRocnV2IiwiYSI6ImNtazFrYmw0NzA1OWUzZHF3NWczYnN0NHcifQ.-ZdRZgv8qdygmFOjPQwY2w';
@@ -26,35 +25,13 @@ const JobMap = ({ jobs, selectedLocationId, onLocationSelect, userLocation }: Jo
   const markersRef = useRef<Map<string, { marker: mapboxgl.Marker; element: HTMLDivElement }>>(new Map());
   const [isLocating, setIsLocating] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [locations, setLocations] = useState<Location[]>([]);
 
-  // Fetch locations from database
-  useEffect(() => {
-    const fetchLocations = async () => {
-      const { data, error } = await supabase
-        .from('locations')
-        .select('*')
-        .eq('city', 'Bangalore');
-
-      if (error) {
-        console.error('Error fetching locations:', error);
-        return;
-      }
-
-      if (data) {
-        setLocations(data.map(loc => ({
-          id: loc.id,
-          companyId: loc.company_id,
-          address: loc.address,
-          city: loc.city,
-          latitude: Number(loc.latitude),
-          longitude: Number(loc.longitude),
-        })));
-      }
-    };
-
-    fetchLocations();
-  }, []);
+  // Derive locations from jobs (each job has embedded location data)
+  const locations: Location[] = useMemo(() => {
+    return jobs
+      .filter(job => job.location?.latitude && job.location?.longitude)
+      .map(job => job.location!);
+  }, [jobs]);
 
   // Initialize map
   useEffect(() => {

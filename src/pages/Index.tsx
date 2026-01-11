@@ -6,8 +6,7 @@ import FilterSidebar from '@/components/FilterSidebar';
 import JobMap from '@/components/JobMap';
 import JobList from '@/components/JobList';
 import { FilterState, Job } from '@/types';
-import { fetchJobs } from '@/services/jobService';
-import { getJobsWithDetails } from '@/data/mockData';
+import { fetchJobsFromApi } from '@/services/apiJobService';
 import { useQuery } from '@tanstack/react-query';
 
 const Index = () => {
@@ -21,19 +20,16 @@ const Index = () => {
     searchQuery: '',
   });
 
-  // Fetch jobs from database
-  const { data: dbJobs, isLoading } = useQuery({
+  // Fetch jobs from API
+  const { data: apiJobs, isLoading } = useQuery({
     queryKey: ['jobs'],
-    queryFn: fetchJobs,
+    queryFn: fetchJobsFromApi,
   });
 
-  // Fall back to mock data if no jobs in database
+  // Use API jobs
   const allJobs = useMemo(() => {
-    if (dbJobs && dbJobs.length > 0) {
-      return dbJobs;
-    }
-    return getJobsWithDetails();
-  }, [dbJobs]);
+    return apiJobs || [];
+  }, [apiJobs]);
 
   // Filter jobs based on current filters
   const filteredJobs = useMemo(() => {
