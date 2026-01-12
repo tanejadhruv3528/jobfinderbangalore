@@ -90,46 +90,59 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="pt-16 h-screen flex flex-col lg:flex-row">
-        {/* Mobile filter toggle */}
-        <Button
-          variant="filter"
-          size="icon"
-          className="fixed bottom-4 left-4 z-30 lg:hidden shadow-lg"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </Button>
+      <main className="pt-16 h-screen flex flex-col">
+        {/* Hero Section */}
+        <div className="bg-primary/5 border-b border-border px-4 py-4 text-center">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">
+            Discover Jobs Near You
+          </h1>
+          <p className="text-sm md:text-base text-muted-foreground mt-1">
+            Browse the map to find opportunities, or filter by role and type to narrow your search.
+          </p>
+        </div>
 
-        {/* Filter Sidebar */}
-        <FilterSidebar
-          filters={filters}
-          onFiltersChange={setFilters}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-
-        {/* Main content area */}
+        {/* Main Content */}
         <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-          {/* Map */}
-          <div className="flex-1 h-[50vh] lg:h-auto">
-            <JobMap
-              jobs={filteredJobs}
-              selectedLocationId={selectedLocationId}
-              onLocationSelect={handleLocationSelect}
-              userLocation={userLocation}
-            />
-          </div>
+          {/* Mobile filter toggle */}
+          <Button
+            variant="filter"
+            size="icon"
+            className="fixed bottom-4 left-4 z-30 lg:hidden shadow-lg"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </Button>
 
-          {/* Job list */}
-          <div className="w-full lg:w-96 h-[50vh] lg:h-auto bg-card border-l border-border overflow-hidden">
-            <JobList
-              jobs={filteredJobs}
-              selectedLocationId={selectedLocationId}
-              onJobSelect={handleJobSelect}
-              isLoading={isLoading}
-              userLocation={userLocation}
-            />
+          {/* Filter Sidebar */}
+          <FilterSidebar
+            filters={filters}
+            onFiltersChange={setFilters}
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+          />
+
+          {/* Main content area */}
+          <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+            {/* Map */}
+            <div className="flex-1 h-[50vh] lg:h-auto">
+              <JobMap
+                jobs={filteredJobs}
+                selectedLocationId={selectedLocationId}
+                onLocationSelect={handleLocationSelect}
+                userLocation={userLocation}
+              />
+            </div>
+
+            {/* Job list */}
+            <div className="w-full lg:w-96 h-[50vh] lg:h-auto bg-card border-l border-border overflow-hidden">
+              <JobList
+                jobs={filteredJobs}
+                selectedLocationId={selectedLocationId}
+                onJobSelect={handleJobSelect}
+                isLoading={isLoading}
+                userLocation={userLocation}
+              />
+            </div>
           </div>
         </div>
       </main>
