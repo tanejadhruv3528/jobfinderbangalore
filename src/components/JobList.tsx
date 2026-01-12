@@ -73,10 +73,10 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocatio
 
   return (
     <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+        <div className="flex items-center gap-2.5">
           <Briefcase className="w-5 h-5 text-primary" />
-          <span className="font-semibold">{jobs.length} Jobs Found</span>
+          <span className="font-semibold text-base">{jobs.length} Jobs Found</span>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -96,23 +96,23 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocatio
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-5 py-4">
         {jobs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center h-full text-center py-12">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-5">
               <Briefcase className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold mb-1">No jobs found</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="font-semibold text-lg mb-2">No jobs found</h3>
+            <p className="text-sm text-muted-foreground max-w-[200px]">
               Try adjusting your filters or search query
             </p>
           </div>
         ) : (
-          <div className={`space-y-4 ${viewMode === 'grid' ? 'grid grid-cols-1 gap-4 space-y-0' : ''}`}>
+          <div className={`space-y-5 ${viewMode === 'grid' ? 'grid grid-cols-1 gap-5 space-y-0' : ''}`}>
             {/* Featured jobs first */}
             {featuredJobs.length > 0 && (
               <>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pb-1">
                   Featured
                 </p>
                 {featuredJobs.map(job => (
@@ -133,7 +133,7 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocatio
             {regularJobs.length > 0 && (
               <>
                 {featuredJobs.length > 0 && (
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-4">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-6 pb-1">
                     All Jobs
                   </p>
                 )}

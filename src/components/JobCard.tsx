@@ -40,19 +40,19 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
         }`}
         onClick={() => onSelect?.(job)}
       >
-        <CardHeader className={isCompact ? 'p-0 pb-2' : ''}>
-          <div className="flex items-start justify-between gap-3">
+        <CardHeader className={isCompact ? 'p-0 pb-3' : 'pb-4'}>
+          <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
               {job.company?.logo && (
                 <img 
                   src={job.company.logo} 
                   alt={job.company.name}
-                  className="w-12 h-12 rounded-lg object-cover bg-muted"
+                  className="w-12 h-12 rounded-lg object-cover bg-muted flex-shrink-0"
                 />
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <CardTitle className="text-base">{job.title}</CardTitle>
+                  <CardTitle className="text-base leading-snug">{job.title}</CardTitle>
                   {job.isFeatured && (
                     <Badge variant="featured" className="flex items-center gap-1">
                       <Star className="w-3 h-3" />
@@ -60,20 +60,20 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5">
+                <p className="text-sm text-muted-foreground mt-1">
                   {job.company?.name}
                 </p>
               </div>
             </div>
-            <Badge variant={getJobTypeBadgeVariant(job.jobType)}>
+            <Badge variant={getJobTypeBadgeVariant(job.jobType)} className="flex-shrink-0">
               {job.jobType}
             </Badge>
           </div>
         </CardHeader>
 
-        <CardContent className={isCompact ? 'p-0' : ''}>
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+        <CardContent className={isCompact ? 'p-0' : 'pt-0'}>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-primary" />
                 {job.location?.city}
@@ -101,7 +101,7 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
                   <span className="text-sm text-muted-foreground">{job.role}</span>
                 </div>
 
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
                   {job.description}
                 </p>
               </>
@@ -109,7 +109,7 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
 
             <Button 
               variant="apply" 
-              className={`w-full ${isCompact ? 'mt-2' : 'mt-4'}`}
+              className={`w-full ${isCompact ? 'mt-3' : 'mt-2'}`}
               onClick={handleApply}
             >
               Apply Now

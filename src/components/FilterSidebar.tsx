@@ -51,9 +51,9 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSide
           pt-20 lg:pt-4
         `}
       >
-        <div className="p-4 h-full overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
+        <div className="p-5 h-full overflow-y-auto">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-lg font-semibold flex items-center gap-2.5">
               <Filter className="w-5 h-5 text-primary" />
               Filters
             </h2>
@@ -72,9 +72,9 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSide
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Search */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label className="text-sm font-medium">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -89,13 +89,13 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSide
             </div>
 
             {/* Distance */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-primary" />
                   Distance
                 </Label>
-                <span className="text-sm text-muted-foreground">{filters.distance} km</span>
+                <span className="text-sm font-medium text-muted-foreground">{filters.distance} km</span>
               </div>
               <Slider
                 value={[filters.distance]}
@@ -112,7 +112,7 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSide
             </div>
 
             {/* Role */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label className="text-sm font-medium flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-primary" />
                 Role
@@ -135,7 +135,7 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSide
             </div>
 
             {/* Job Type */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label className="text-sm font-medium">Job Type</Label>
               <Select
                 value={filters.jobType}
