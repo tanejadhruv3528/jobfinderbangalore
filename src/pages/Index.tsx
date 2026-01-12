@@ -92,11 +92,11 @@ const Index = () => {
       
       <main className="pt-16 h-screen flex flex-col">
         {/* Hero Section */}
-        <div className="bg-primary/5 border-b border-border px-4 py-4 text-center">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">
+        <div className="bg-primary/5 border-b border-border px-6 py-5 text-center">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
             Discover Jobs Near You
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">
+          <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-xl mx-auto">
             Browse the map to find opportunities, or filter by role and type to narrow your search.
           </p>
         </div>
