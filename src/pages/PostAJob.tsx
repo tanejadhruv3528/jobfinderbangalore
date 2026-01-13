@@ -83,10 +83,10 @@ const PostAJob = () => {
                 <CheckCircle className="h-16 w-16 text-green-500" />
               </div>
               <h2 className="text-2xl font-semibold text-foreground mb-3">
-                Job posted successfully
+                Job posted successfully.
               </h2>
               <p className="text-muted-foreground mb-8">
-                It will now appear on the map.
+                It is now live on the map.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button onClick={() => navigate("/")} variant="outline">
@@ -113,10 +113,10 @@ const PostAJob = () => {
             <MapPin className="h-6 w-6 text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-3">
-            Post a Job for Free (Beta)
+            Post a Job for Free (Private Beta)
           </h1>
           <p className="text-lg text-muted-foreground">
-            Your job will appear on the Bangalore job map instantly.
+            Your job will appear instantly on the Bangalore job map.
           </p>
         </div>
 
