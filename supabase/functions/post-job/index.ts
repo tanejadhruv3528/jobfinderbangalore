@@ -166,13 +166,13 @@ serve(async (req) => {
       );
     }
 
-    // Store contact email in job_sources as a reference
+    // Store contact email in job_sources as a reference (lowercase for consistent matching)
     await supabase
       .from('job_sources')
       .insert({
         job_id: job.id,
         source_type: 'employer_direct',
-        source_url: `mailto:${contactEmail}`,
+        source_url: `mailto:${contactEmail.trim().toLowerCase()}`,
       });
 
     console.log('Job posted successfully:', job.id);
