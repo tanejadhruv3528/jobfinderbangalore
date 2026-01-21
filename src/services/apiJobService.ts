@@ -1,43 +1,57 @@
 import { Job } from '@/types';
+import { jobsApi, ApiJob } from './api';
 
-interface ApiJob {
-  id: string;
-  title: string;
-  description: string;
-  latitude: number;
-  longitude: number;
-  apply_url: string;
-}
+// Transform API job to frontend Job type
+const transformJob = (job: ApiJob, index: number): Job => ({
+  id: job.id,
+  companyId: job.id,
+  locationId: job.id,
+  title: job.title,
+  role: 'General',
+  experience: '',
+  salary: '',
+  jobType: 'full-time' as const,
+  description: job.description || '',
+  applyUrl: job.apply_url,
+  isFeatured: index < 3,
+  createdAt: job.created_at || new Date().toISOString(),
+  company: job.company_name ? { 
+    id: job.id, 
+    name: job.company_name, 
+    industry: '', 
+    website: '', 
+    logo: '' 
+  } : undefined,
+  location: {
+    id: job.id,
+    companyId: null,
+    address: job.location_address || '',
+    city: 'Bangalore',
+    latitude: job.latitude,
+    longitude: job.longitude,
+  },
+});
 
 export const fetchJobsFromApi = async (): Promise<Job[]> => {
-  const response = await fetch('http://localhost:4000/api/jobs');
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch jobs: ${response.statusText}`);
-  }
+  const data = await jobsApi.getAll();
+  return data.map((job, index) => transformJob(job, index));
+};
 
-  const data: ApiJob[] = await response.json();
+export const fetchMyJobs = async (): Promise<Job[]> => {
+  const data = await jobsApi.getMyJobs();
+  return data.map((job, index) => transformJob(job, index));
+};
 
-  return data.map((job, index) => ({
-    id: job.id,
-    companyId: job.id, // Use job id as placeholder
-    locationId: job.id, // Use job id as location id for pin synchronization
-    title: job.title,
-    role: 'General', // Default role since API doesn't provide
-    experience: '',
-    salary: '',
-    jobType: 'full-time' as const,
-    description: job.description || '',
-    applyUrl: job.apply_url,
-    isFeatured: index < 3, // Mark first 3 as featured
-    createdAt: new Date().toISOString(),
-    location: {
-      id: job.id,
-      companyId: null,
-      address: '',
-      city: 'Bangalore',
-      latitude: job.latitude,
-      longitude: job.longitude,
-    },
-  }));
+export const createJob = async (job: {
+  title: string;
+  description: string;
+  maps_url: string;
+  apply_url: string;
+}): Promise<Job> => {
+  const data = await jobsApi.create(job);
+  return transformJob(data, 0);
+};
+
+export const deleteJob = async (jobId: string): Promise<void> => {
+  await jobsApi.delete(jobId);
 };

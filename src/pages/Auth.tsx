@@ -24,7 +24,7 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const from = (location.state as any)?.from?.pathname || '/admin';
+      const from = (location.state as any)?.from?.pathname || '/my-jobs';
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
@@ -47,7 +47,7 @@ const Auth = () => {
             title: 'Welcome back!',
             description: 'You have successfully logged in.',
           });
-          navigate('/admin');
+          navigate('/my-jobs');
         }
       } else {
         const { error } = await signUp(email, password, fullName);
@@ -62,7 +62,7 @@ const Auth = () => {
             title: 'Account created!',
             description: 'Your employer account has been created.',
           });
-          navigate('/admin');
+          navigate('/my-jobs');
         }
       }
     } catch (error) {

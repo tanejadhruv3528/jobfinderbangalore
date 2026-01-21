@@ -1,10 +1,14 @@
-import { MapPin, Briefcase, User } from 'lucide-react';
+import { MapPin, Briefcase, User, LogOut, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const location = useLocation();
-  const isAdmin = location.pathname.startsWith('/admin') || location.pathname.startsWith('/auth');
+  const { user, signOut } = useAuth();
+  const isEmployerSection = location.pathname.startsWith('/my-jobs') || 
+                            location.pathname.startsWith('/auth') || 
+                            location.pathname.startsWith('/post-a-job');
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
@@ -30,31 +34,65 @@ const Header = () => {
           >
             Find Jobs
           </Link>
-          <Link 
-            to="/admin" 
-            className={`text-sm font-medium transition-colors hover:text-primary ${
-              isAdmin ? 'text-primary' : 'text-muted-foreground'
-            }`}
-          >
-            For Employers
-          </Link>
+          {user && (
+            <>
+              <Link 
+                to="/post-a-job" 
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  location.pathname === '/post-a-job' ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                Post a Job
+              </Link>
+              <Link 
+                to="/my-jobs" 
+                className={`text-sm font-medium transition-colors hover:text-primary ${
+                  location.pathname === '/my-jobs' ? 'text-primary' : 'text-muted-foreground'
+                }`}
+              >
+                My Jobs
+              </Link>
+            </>
+          )}
         </nav>
 
         <div className="flex items-center gap-3">
-          {!isAdmin ? (
-            <Link to="/auth">
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <User className="w-4 h-4 mr-2" />
-                Employer Login
+          {user ? (
+            <>
+              <Link to="/post-a-job" className="hidden sm:block">
+                <Button variant="hero" size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Post Job
+                </Button>
+              </Link>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={signOut}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
               </Button>
-            </Link>
+            </>
           ) : (
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <Briefcase className="w-4 h-4 mr-2" />
-                Browse Jobs
-              </Button>
-            </Link>
+            <>
+              {!isEmployerSection ? (
+                <Link to="/auth">
+                  <Button variant="outline" size="sm" className="hidden sm:flex">
+                    <User className="w-4 h-4 mr-2" />
+                    Employer Login
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/">
+                  <Button variant="outline" size="sm">
+                    <Briefcase className="w-4 h-4 mr-2" />
+                    Browse Jobs
+                  </Button>
+                </Link>
+              )}
+            </>
           )}
         </div>
       </div>
