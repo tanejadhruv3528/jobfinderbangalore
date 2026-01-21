@@ -17,7 +17,7 @@ const formSchema = z.object({
   companyName: z.string().trim().min(1, "Company name is required").max(100, "Company name must be less than 100 characters"),
   jobTitle: z.string().trim().min(1, "Job title is required").max(100, "Job title must be less than 100 characters"),
   jobDescription: z.string().trim().min(1, "Job description is required").max(5000, "Job description must be less than 5000 characters"),
-  jobLocation: z.string().trim().min(1, "Job location is required").max(200, "Job location must be less than 200 characters"),
+  mapsUrl: z.string().trim().min(1, "Google Maps link is required"),
   applyUrl: z.string().trim().url("Please enter a valid URL"),
   contactEmail: z.string().trim().email("Please enter a valid email address"),
 });
@@ -48,7 +48,7 @@ const PostAJob = () => {
           companyName: data.companyName,
           jobTitle: data.jobTitle,
           jobDescription: data.jobDescription,
-          jobLocation: data.jobLocation,
+          maps_url: data.mapsUrl,
           applyUrl: data.applyUrl,
           contactEmail: data.contactEmail,
         },
@@ -172,20 +172,20 @@ const PostAJob = () => {
                 )}
               </div>
 
-              {/* Job Location */}
+              {/* Google Maps Location Link */}
               <div className="space-y-2">
-                <Label htmlFor="jobLocation">Job Location (Bangalore)</Label>
+                <Label htmlFor="mapsUrl">Google Maps Location Link</Label>
                 <Input
-                  id="jobLocation"
-                  placeholder="e.g., Koramangala, 5th Block or full address"
-                  {...register("jobLocation")}
-                  className={errors.jobLocation ? "border-destructive" : ""}
+                  id="mapsUrl"
+                  placeholder="https://maps.google.com/..."
+                  {...register("mapsUrl")}
+                  className={errors.mapsUrl ? "border-destructive" : ""}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Enter a street address or area in Bangalore
+                  Paste the Google Maps link of your office or workplace location.
                 </p>
-                {errors.jobLocation && (
-                  <p className="text-sm text-destructive">{errors.jobLocation.message}</p>
+                {errors.mapsUrl && (
+                  <p className="text-sm text-destructive">{errors.mapsUrl.message}</p>
                 )}
               </div>
 
