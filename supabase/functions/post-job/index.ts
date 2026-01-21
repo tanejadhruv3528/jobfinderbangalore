@@ -6,38 +6,53 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Simple geocoding for Bangalore addresses using Nominatim
-async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+// Parse coordinates from Google Maps URL
+function parseGoogleMapsUrl(url: string): { lat: number; lng: number; address: string } | null {
   try {
-    const query = `${address}, Bangalore, Karnataka, India`;
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'JobPins/1.0'
-      }
-    });
-    
-    if (!response.ok) {
-      console.error('Geocoding request failed:', response.statusText);
-      return null;
-    }
-    
-    const data = await response.json();
-    
-    if (data && data.length > 0) {
+    // Pattern 1: @lat,lng format (most common)
+    const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (atMatch) {
       return {
-        lat: parseFloat(data[0].lat),
-        lng: parseFloat(data[0].lon)
+        lat: parseFloat(atMatch[1]),
+        lng: parseFloat(atMatch[2]),
+        address: 'Bangalore'
       };
     }
-    
-    // Default to central Bangalore if geocoding fails
-    return { lat: 12.9716, lng: 77.5946 };
+
+    // Pattern 2: !3d lat !4d lng format
+    const dMatch = url.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+    if (dMatch) {
+      return {
+        lat: parseFloat(dMatch[1]),
+        lng: parseFloat(dMatch[2]),
+        address: 'Bangalore'
+      };
+    }
+
+    // Pattern 3: q=lat,lng format
+    const qMatch = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (qMatch) {
+      return {
+        lat: parseFloat(qMatch[1]),
+        lng: parseFloat(qMatch[2]),
+        address: 'Bangalore'
+      };
+    }
+
+    // Pattern 4: place/name/@lat,lng
+    const placeMatch = url.match(/place\/([^/@]+)\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+    if (placeMatch) {
+      return {
+        lat: parseFloat(placeMatch[2]),
+        lng: parseFloat(placeMatch[3]),
+        address: decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
+      };
+    }
+
+    return null;
   } catch (error) {
-    console.error('Geocoding error:', error);
-    // Default to central Bangalore
-    return { lat: 12.9716, lng: 77.5946 };
+    console.error('Error parsing Google Maps URL:', error);
+    return null;
   }
 }
 
@@ -55,10 +70,12 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const body = await req.json();
-    const { companyName, jobTitle, jobDescription, jobLocation, applyUrl, contactEmail } = body;
+    const { companyName, jobTitle, jobDescription, maps_url, applyUrl, contactEmail } = body;
+
+    console.log('Received data:', { companyName, jobTitle, jobDescription, maps_url, applyUrl, contactEmail });
 
     // Validate required fields
-    if (!companyName || !jobTitle || !jobDescription || !jobLocation || !applyUrl || !contactEmail) {
+    if (!companyName || !jobTitle || !jobDescription || !maps_url || !applyUrl || !contactEmail) {
       return new Response(
         JSON.stringify({ error: 'All fields are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -84,11 +101,21 @@ serve(async (req) => {
       );
     }
 
-    // Geocode the address
-    const coords = await geocodeAddress(jobLocation);
+    // Validate and parse Google Maps URL
+    try {
+      new URL(maps_url);
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid Google Maps URL format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Parse coordinates from Google Maps URL
+    const coords = parseGoogleMapsUrl(maps_url);
     if (!coords) {
       return new Response(
-        JSON.stringify({ error: 'Could not determine location. Please provide a more specific address.' }),
+        JSON.stringify({ error: 'Could not extract location from Google Maps URL. Please use a valid Google Maps link.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -119,7 +146,7 @@ serve(async (req) => {
       .from('locations')
       .insert({
         company_id: company.id,
-        address: jobLocation.trim().substring(0, 200),
+        address: coords.address,
         city: 'Bangalore',
         latitude: coords.lat,
         longitude: coords.lng,
