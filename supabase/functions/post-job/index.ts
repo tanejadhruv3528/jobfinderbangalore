@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 // Parse coordinates from Google Maps URL
-function parseGoogleMapsUrl(url: string): { lat: number; lng: number; address: string } | null {
+function parseGoogleMapsUrl(url: string): { lat: number; lng: number } | null {
   try {
     // Pattern 1: @lat,lng format (most common)
     const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
@@ -15,7 +15,6 @@ function parseGoogleMapsUrl(url: string): { lat: number; lng: number; address: s
       return {
         lat: parseFloat(atMatch[1]),
         lng: parseFloat(atMatch[2]),
-        address: 'Bangalore'
       };
     }
 
@@ -25,7 +24,6 @@ function parseGoogleMapsUrl(url: string): { lat: number; lng: number; address: s
       return {
         lat: parseFloat(dMatch[1]),
         lng: parseFloat(dMatch[2]),
-        address: 'Bangalore'
       };
     }
 
@@ -35,7 +33,6 @@ function parseGoogleMapsUrl(url: string): { lat: number; lng: number; address: s
       return {
         lat: parseFloat(qMatch[1]),
         lng: parseFloat(qMatch[2]),
-        address: 'Bangalore'
       };
     }
 
@@ -45,13 +42,57 @@ function parseGoogleMapsUrl(url: string): { lat: number; lng: number; address: s
       return {
         lat: parseFloat(placeMatch[2]),
         lng: parseFloat(placeMatch[3]),
-        address: decodeURIComponent(placeMatch[1].replace(/\+/g, ' '))
       };
     }
 
     return null;
   } catch (error) {
     console.error('Error parsing Google Maps URL:', error);
+    return null;
+  }
+}
+
+// Extract place name from Google Maps URL for geocoding fallback
+function extractPlaceName(url: string): string | null {
+  try {
+    // Pattern: /place/Place+Name/
+    const placeMatch = url.match(/\/place\/([^/@?]+)/);
+    if (placeMatch) {
+      return decodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Geocode address using Nominatim
+async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const query = `${address}, Bangalore, Karnataka, India`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+    
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'JobPins/1.0' }
+    });
+    
+    if (!response.ok) {
+      console.error('Geocoding request failed:', response.statusText);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    if (data && data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon)
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Geocoding error:', error);
     return null;
   }
 }
@@ -111,11 +152,23 @@ serve(async (req) => {
       );
     }
 
-    // Parse coordinates from Google Maps URL
-    const coords = parseGoogleMapsUrl(maps_url);
+    // Try to parse coordinates from URL, fallback to geocoding place name
+    let coords = parseGoogleMapsUrl(maps_url);
+    let locationAddress = 'Bangalore';
+    
+    if (!coords) {
+      // Try to extract place name and geocode it
+      const placeName = extractPlaceName(maps_url);
+      if (placeName) {
+        console.log('Geocoding place name:', placeName);
+        coords = await geocodeAddress(placeName);
+        locationAddress = placeName;
+      }
+    }
+    
     if (!coords) {
       return new Response(
-        JSON.stringify({ error: 'Could not extract location from Google Maps URL. Please use a valid Google Maps link.' }),
+        JSON.stringify({ error: 'Could not extract location from Google Maps URL. Please use a link that shows coordinates (e.g., right-click on the map and select the location).' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -146,7 +199,7 @@ serve(async (req) => {
       .from('locations')
       .insert({
         company_id: company.id,
-        address: coords.address,
+        address: locationAddress,
         city: 'Bangalore',
         latitude: coords.lat,
         longitude: coords.lng,
