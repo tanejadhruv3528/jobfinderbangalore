@@ -10,16 +10,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { MapPin, CheckCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { createJob } from "@/services/apiJobService";
+import { MapPin, CheckCircle, Loader2, Lock } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const formSchema = z.object({
-  companyName: z.string().trim().min(1, "Company name is required").max(100, "Company name must be less than 100 characters"),
-  jobTitle: z.string().trim().min(1, "Job title is required").max(100, "Job title must be less than 100 characters"),
-  jobDescription: z.string().trim().min(1, "Job description is required").max(5000, "Job description must be less than 5000 characters"),
-  mapsUrl: z.string().trim().min(1, "Google Maps link is required"),
-  applyUrl: z.string().trim().url("Please enter a valid URL"),
-  contactEmail: z.string().trim().email("Please enter a valid email address"),
+  title: z.string().trim().min(1, "Job title is required").max(100, "Job title must be less than 100 characters"),
+  description: z.string().trim().min(1, "Job description is required").max(5000, "Job description must be less than 5000 characters"),
+  maps_url: z.string().trim().min(1, "Google Maps link is required"),
+  apply_url: z.string().trim().url("Please enter a valid URL"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -29,6 +29,7 @@ const PostAJob = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   const {
     register,
@@ -43,20 +44,12 @@ const PostAJob = () => {
     setIsSubmitting(true);
 
     try {
-      const { data: result, error } = await supabase.functions.invoke('post-job', {
-        body: {
-          companyName: data.companyName,
-          jobTitle: data.jobTitle,
-          jobDescription: data.jobDescription,
-          maps_url: data.mapsUrl,
-          applyUrl: data.applyUrl,
-          contactEmail: data.contactEmail,
-        },
+      await createJob({
+        title: data.title,
+        description: data.description,
+        maps_url: data.maps_url,
+        apply_url: data.apply_url,
       });
-
-      if (error) {
-        throw new Error(error.message || 'Failed to post job');
-      }
 
       setIsSuccess(true);
       reset();
@@ -71,6 +64,42 @@ const PostAJob = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Require login
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container max-w-2xl mx-auto px-4 py-16">
+          <Card className="border-0 shadow-lg">
+            <CardContent className="pt-12 pb-12 text-center">
+              <div className="flex justify-center mb-6">
+                <Lock className="h-16 w-16 text-muted-foreground" />
+              </div>
+              <h2 className="text-2xl font-semibold text-foreground mb-3">
+                Login Required
+              </h2>
+              <p className="text-muted-foreground mb-8">
+                You need to be logged in to post a job.
+              </p>
+              <Button asChild>
+                <Link to="/auth">Login to Post a Job</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (isSuccess) {
     return (
@@ -113,7 +142,7 @@ const PostAJob = () => {
             <MapPin className="h-6 w-6 text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-3">
-            Post a Job for Free (Private Beta)
+            Post a Job
           </h1>
           <p className="text-lg text-muted-foreground">
             Your job will appear instantly on the Bangalore job map.
@@ -129,96 +158,64 @@ const PostAJob = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Company Name */}
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
-                <Input
-                  id="companyName"
-                  placeholder="e.g., Acme Technologies"
-                  {...register("companyName")}
-                  className={errors.companyName ? "border-destructive" : ""}
-                />
-                {errors.companyName && (
-                  <p className="text-sm text-destructive">{errors.companyName.message}</p>
-                )}
-              </div>
-
               {/* Job Title */}
               <div className="space-y-2">
-                <Label htmlFor="jobTitle">Job Title</Label>
+                <Label htmlFor="title">Job Title</Label>
                 <Input
-                  id="jobTitle"
+                  id="title"
                   placeholder="e.g., Senior Software Engineer"
-                  {...register("jobTitle")}
-                  className={errors.jobTitle ? "border-destructive" : ""}
+                  {...register("title")}
+                  className={errors.title ? "border-destructive" : ""}
                 />
-                {errors.jobTitle && (
-                  <p className="text-sm text-destructive">{errors.jobTitle.message}</p>
+                {errors.title && (
+                  <p className="text-sm text-destructive">{errors.title.message}</p>
                 )}
               </div>
 
               {/* Job Description */}
               <div className="space-y-2">
-                <Label htmlFor="jobDescription">Job Description</Label>
+                <Label htmlFor="description">Job Description</Label>
                 <Textarea
-                  id="jobDescription"
+                  id="description"
                   placeholder="Describe the role, responsibilities, and requirements..."
                   rows={6}
-                  {...register("jobDescription")}
-                  className={errors.jobDescription ? "border-destructive" : ""}
+                  {...register("description")}
+                  className={errors.description ? "border-destructive" : ""}
                 />
-                {errors.jobDescription && (
-                  <p className="text-sm text-destructive">{errors.jobDescription.message}</p>
+                {errors.description && (
+                  <p className="text-sm text-destructive">{errors.description.message}</p>
                 )}
               </div>
 
               {/* Google Maps Location Link */}
               <div className="space-y-2">
-                <Label htmlFor="mapsUrl">Google Maps Location Link</Label>
+                <Label htmlFor="maps_url">Google Maps Location Link</Label>
                 <Input
-                  id="mapsUrl"
+                  id="maps_url"
                   placeholder="https://maps.google.com/..."
-                  {...register("mapsUrl")}
-                  className={errors.mapsUrl ? "border-destructive" : ""}
+                  {...register("maps_url")}
+                  className={errors.maps_url ? "border-destructive" : ""}
                 />
                 <p className="text-xs text-muted-foreground">
                   Paste the Google Maps link of your office or workplace location.
                 </p>
-                {errors.mapsUrl && (
-                  <p className="text-sm text-destructive">{errors.mapsUrl.message}</p>
+                {errors.maps_url && (
+                  <p className="text-sm text-destructive">{errors.maps_url.message}</p>
                 )}
               </div>
 
               {/* Apply URL */}
               <div className="space-y-2">
-                <Label htmlFor="applyUrl">Apply URL</Label>
+                <Label htmlFor="apply_url">Apply URL</Label>
                 <Input
-                  id="applyUrl"
+                  id="apply_url"
                   type="url"
                   placeholder="https://yourcompany.com/careers/apply"
-                  {...register("applyUrl")}
-                  className={errors.applyUrl ? "border-destructive" : ""}
+                  {...register("apply_url")}
+                  className={errors.apply_url ? "border-destructive" : ""}
                 />
-                {errors.applyUrl && (
-                  <p className="text-sm text-destructive">{errors.applyUrl.message}</p>
-                )}
-              </div>
-
-              {/* Contact Email */}
-              <div className="space-y-2">
-                <Label htmlFor="contactEmail">Contact Email</Label>
-                <Input
-                  id="contactEmail"
-                  type="email"
-                  placeholder="hr@yourcompany.com"
-                  {...register("contactEmail")}
-                  className={errors.contactEmail ? "border-destructive" : ""}
-                />
-                <p className="text-xs text-muted-foreground">
-                  We'll use this if we need to contact you about your listing
-                </p>
-                {errors.contactEmail && (
-                  <p className="text-sm text-destructive">{errors.contactEmail.message}</p>
+                {errors.apply_url && (
+                  <p className="text-sm text-destructive">{errors.apply_url.message}</p>
                 )}
               </div>
 
