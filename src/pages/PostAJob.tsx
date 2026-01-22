@@ -10,10 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import { createJob } from "@/services/apiJobService";
-import { MapPin, CheckCircle, Loader2, Lock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { MapPin, CheckCircle, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().trim().min(1, "Job title is required").max(100, "Job title must be less than 100 characters"),
@@ -29,7 +27,6 @@ const PostAJob = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
 
   const {
     register,
@@ -65,42 +62,7 @@ const PostAJob = () => {
     }
   };
 
-  // Show loading while checking auth
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Require login
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container max-w-2xl mx-auto px-4 py-16">
-          <Card className="border-0 shadow-lg">
-            <CardContent className="pt-12 pb-12 text-center">
-              <div className="flex justify-center mb-6">
-                <Lock className="h-16 w-16 text-muted-foreground" />
-              </div>
-              <h2 className="text-2xl font-semibold text-foreground mb-3">
-                Login Required
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                You need to be logged in to post a job.
-              </p>
-              <Button asChild>
-                <Link to="/auth">Login to Post a Job</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
+  // Success state
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-background">
@@ -109,7 +71,7 @@ const PostAJob = () => {
           <Card className="border-0 shadow-lg">
             <CardContent className="pt-12 pb-12 text-center">
               <div className="flex justify-center mb-6">
-                <CheckCircle className="h-16 w-16 text-green-500" />
+                <CheckCircle className="h-16 w-16 text-success" />
               </div>
               <h2 className="text-2xl font-semibold text-foreground mb-3">
                 Job posted successfully.

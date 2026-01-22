@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Briefcase, Trash2, Calendar, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,26 +15,19 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 import { fetchMyJobs, deleteJob } from '@/services/apiJobService';
 import { Job } from '@/types';
 import Header from '@/components/Header';
-import { Link } from 'react-router-dom';
-import { Lock } from 'lucide-react';
 
 const MyJobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const { toast } = useToast();
-  const { user, loading: authLoading } = useAuth();
-  const navigate = useNavigate();
 
-  // Fetch jobs when user is authenticated
+  // Fetch jobs on mount (protected route ensures user is authenticated)
   useEffect(() => {
     const loadJobs = async () => {
-      if (!user) return;
-      
       setIsLoading(true);
       try {
         const data = await fetchMyJobs();
@@ -51,12 +44,8 @@ const MyJobs = () => {
       }
     };
 
-    if (!authLoading && user) {
-      loadJobs();
-    } else if (!authLoading && !user) {
-      setIsLoading(false);
-    }
-  }, [user, authLoading, toast]);
+    loadJobs();
+  }, [toast]);
 
   const handleDeleteJob = async (jobId: string) => {
     setDeletingJobId(jobId);
@@ -90,42 +79,6 @@ const MyJobs = () => {
       day: 'numeric',
     });
   };
-
-  // Show loading while checking auth
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Require login
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container max-w-2xl mx-auto px-4 py-16">
-          <Card className="border-0 shadow-lg">
-            <CardContent className="pt-12 pb-12 text-center">
-              <div className="flex justify-center mb-6">
-                <Lock className="h-16 w-16 text-muted-foreground" />
-              </div>
-              <h2 className="text-2xl font-semibold text-foreground mb-3">
-                Login Required
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                You need to be logged in to view your jobs.
-              </p>
-              <Button asChild>
-                <Link to="/auth">Login to View Jobs</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
