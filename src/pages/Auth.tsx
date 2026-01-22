@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Building2, Eye, EyeOff, ArrowRight, User } from 'lucide-react';
+import { Mail, Lock, Building2, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [companyName, setCompanyName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,7 +50,7 @@ const Auth = () => {
           navigate('/my-jobs');
         }
       } else {
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await signUp(email, password, companyName);
         if (error) {
           toast({
             title: 'Sign up failed',
@@ -101,16 +101,17 @@ const Auth = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {!isLogin && (
                   <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name</Label>
+                    <Label htmlFor="companyName">Company Name</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
-                        id="fullName"
+                        id="companyName"
                         type="text"
-                        placeholder="John Smith"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Acme Inc."
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
                         className="pl-10"
+                        required
                       />
                     </div>
                   </div>

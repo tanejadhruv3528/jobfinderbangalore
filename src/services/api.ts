@@ -1,7 +1,7 @@
 const API_BASE_URL = 'http://localhost:4000';
 
 // Token management
-const TOKEN_KEY = 'auth_token';
+const TOKEN_KEY = 'jobpins_token';
 
 export const getToken = (): string | null => {
   return localStorage.getItem(TOKEN_KEY);
@@ -56,10 +56,10 @@ export const authApi = {
     return data;
   },
 
-  register: async (email: string, password: string, fullName?: string): Promise<{ token: string; user: { id: string; email: string } }> => {
+  register: async (email: string, password: string, companyName?: string): Promise<{ token: string; user: { id: string; email: string } }> => {
     const data = await request<{ token: string; user: { id: string; email: string } }>('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ email, password, full_name: fullName }),
+      body: JSON.stringify({ email, password, company_name: companyName }),
     });
     setToken(data.token);
     return data;
