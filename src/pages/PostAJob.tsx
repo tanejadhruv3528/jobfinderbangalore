@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { createJob } from "@/services/apiJobService";
+import { useAuth } from "@/contexts/AuthContext";
 import { MapPin, CheckCircle, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
@@ -27,6 +28,7 @@ const PostAJob = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const {
     register,
@@ -46,6 +48,7 @@ const PostAJob = () => {
         description: data.description,
         maps_url: data.maps_url,
         apply_url: data.apply_url,
+        contact_email: user?.email || '',
       });
 
       setIsSuccess(true);
