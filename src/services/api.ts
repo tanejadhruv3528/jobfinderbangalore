@@ -45,24 +45,41 @@ const request = async <T>(
   return data;
 };
 
+// Helper to decode JWT and extract user info
+const decodeTokenToUser = (token: string): { id: string; email: string } => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return {
+      id: String(payload.id || payload.sub || ''),
+      email: payload.email || '',
+    };
+  } catch {
+    throw new Error('Invalid token format');
+  }
+};
+
 // Auth API
 export const authApi = {
   login: async (email: string, password: string): Promise<{ token: string; user: { id: string; email: string } }> => {
-    const data = await request<{ token: string; user: { id: string; email: string } }>('/api/auth/login', {
+    const data = await request<{ token: string; user?: { id: string; email: string } }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
     setToken(data.token);
-    return data;
+    // If backend doesn't return user, decode from token
+    const user = data.user || decodeTokenToUser(data.token);
+    return { token: data.token, user };
   },
 
   register: async (email: string, password: string, companyName?: string): Promise<{ token: string; user: { id: string; email: string } }> => {
-    const data = await request<{ token: string; user: { id: string; email: string } }>('/api/auth/register', {
+    const data = await request<{ token: string; user?: { id: string; email: string } }>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, company_name: companyName }),
     });
     setToken(data.token);
-    return data;
+    // If backend doesn't return user, decode from token
+    const user = data.user || decodeTokenToUser(data.token);
+    return { token: data.token, user };
   },
 
   logout: (): void => {
@@ -100,6 +117,7 @@ export const jobsApi = {
     description: string;
     maps_url: string;
     apply_url: string;
+    contact_email: string;
   }): Promise<ApiJob> => {
     return request<ApiJob>('/api/jobs', {
       method: 'POST',

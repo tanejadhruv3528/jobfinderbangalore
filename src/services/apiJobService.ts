@@ -47,6 +47,7 @@ export const createJob = async (job: {
   description: string;
   maps_url: string;
   apply_url: string;
+  contact_email: string;
 }): Promise<Job> => {
   const data = await jobsApi.create(job);
   return transformJob(data, 0);
