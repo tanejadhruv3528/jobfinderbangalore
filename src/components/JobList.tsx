@@ -1,7 +1,8 @@
-import { Briefcase, List, Grid, Loader2 } from 'lucide-react';
+import { Briefcase, List, Grid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Job } from '@/types';
 import JobCard from './JobCard';
+import JobCardSkeleton from './JobCardSkeleton';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { calculateDistance, formatDistance } from '@/lib/distance';
 
@@ -62,10 +63,18 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocatio
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
-          <p className="text-sm text-muted-foreground">Loading jobs...</p>
+      <div className="h-full flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <div className="flex items-center gap-2.5">
+            <Briefcase className="w-5 h-5 text-primary" />
+            <span className="font-semibold text-base text-muted-foreground">Loading jobs...</span>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+          <JobCardSkeleton isCompact />
+          <JobCardSkeleton isCompact />
+          <JobCardSkeleton isCompact />
+          <JobCardSkeleton isCompact />
         </div>
       </div>
     );

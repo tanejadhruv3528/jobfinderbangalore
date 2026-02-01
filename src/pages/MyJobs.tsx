@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Briefcase, Trash2, Calendar, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,23 @@ import { useToast } from '@/hooks/use-toast';
 import { fetchMyJobs, deleteJob } from '@/services/apiJobService';
 import { Job } from '@/types';
 import Header from '@/components/Header';
+
+const MyJobCardSkeleton = () => (
+  <Card className="overflow-hidden">
+    <CardContent className="p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0 space-y-3">
+          <Skeleton className="h-6 w-48" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-64" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <Skeleton className="h-9 w-28 rounded-md" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 const MyJobs = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -100,8 +118,10 @@ const MyJobs = () => {
           {/* Jobs List */}
           <div className="space-y-4">
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <div className="space-y-4">
+                <MyJobCardSkeleton />
+                <MyJobCardSkeleton />
+                <MyJobCardSkeleton />
               </div>
             ) : jobs.length === 0 ? (
               <Card>
