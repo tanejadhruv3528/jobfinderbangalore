@@ -52,7 +52,9 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <CardTitle className="text-base leading-snug">{job.title}</CardTitle>
+                  <CardTitle className="text-base font-semibold leading-snug text-foreground">
+                    {job.title}
+                  </CardTitle>
                   {job.isFeatured && (
                     <Badge variant="featured" className="flex items-center gap-1">
                       <Star className="w-3 h-3" />
@@ -60,7 +62,7 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground/80 mt-1 font-normal">
                   {job.company?.name}
                 </p>
               </div>
@@ -73,10 +75,10 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
 
         <CardContent className={isCompact ? 'p-0' : 'pt-0'}>
           <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground/90">
               <span className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-primary" />
-                {job.location?.city}
+                <MapPin className="w-4 h-4 text-primary/80" />
+                <span className="text-foreground/80">{job.location?.city}</span>
               </span>
               {distance !== undefined && (
                 <span className="flex items-center gap-1.5 text-primary font-medium">
@@ -85,11 +87,11 @@ const JobCard = forwardRef<HTMLDivElement, JobCardProps>(
                 </span>
               )}
               <span className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4" />
+                <Clock className="w-4 h-4 text-muted-foreground/70" />
                 {job.experience}
               </span>
               <span className="flex items-center gap-1.5">
-                <DollarSign className="w-4 h-4" />
+                <DollarSign className="w-4 h-4 text-muted-foreground/70" />
                 {job.salary}
               </span>
             </div>
