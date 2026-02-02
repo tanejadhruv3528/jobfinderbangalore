@@ -18,7 +18,7 @@ const Header = () => {
             <MapPin className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold text-foreground">
-            Nearby<span className="text-primary">Jobs</span>
+            Job<span className="text-primary">Pins</span>
           </span>
           <span className="hidden sm:inline-flex ml-2 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide bg-muted text-muted-foreground rounded-full border border-border">
             Beta
