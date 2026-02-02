@@ -32,7 +32,7 @@ const Header = () => {
               location.pathname === '/' ? 'text-primary' : 'text-muted-foreground'
             }`}
           >
-            Find Jobs
+            Browse Jobs
           </Link>
           {user && (
             <>
@@ -78,15 +78,23 @@ const Header = () => {
           ) : (
             <>
               {!isEmployerSection ? (
-                <Link to="/auth">
-                  <Button variant="outline" size="sm" className="hidden sm:flex">
-                    <User className="w-4 h-4 mr-2" />
-                    Employer Login
-                  </Button>
-                </Link>
+                <>
+                  <Link to="/">
+                    <Button variant="hero" size="sm" className="hidden sm:flex">
+                      <Briefcase className="w-4 h-4 mr-2" />
+                      Browse Jobs
+                    </Button>
+                  </Link>
+                  <Link to="/auth">
+                    <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-foreground">
+                      <User className="w-4 h-4 mr-2" />
+                      Employer Login
+                    </Button>
+                  </Link>
+                </>
               ) : (
                 <Link to="/">
-                  <Button variant="outline" size="sm">
+                  <Button variant="hero" size="sm">
                     <Briefcase className="w-4 h-4 mr-2" />
                     Browse Jobs
                   </Button>
