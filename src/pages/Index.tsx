@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
@@ -13,6 +13,8 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     distance: 50,
     role: 'All Roles',
@@ -25,6 +27,19 @@ const Index = () => {
     queryKey: ['jobs'],
     queryFn: fetchJobsFromApi,
   });
+
+  // Show "Updating results..." briefly when filters change
+  const handleFiltersChange = useCallback((newFilters: FilterState) => {
+    setFilters(newFilters);
+    setIsUpdating(true);
+    
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+    updateTimeoutRef.current = setTimeout(() => {
+      setIsUpdating(false);
+    }, 400);
+  }, []);
 
   // Use API jobs
   const allJobs = useMemo(() => {
@@ -116,7 +131,7 @@ const Index = () => {
           {/* Filter Sidebar */}
           <FilterSidebar
             filters={filters}
-            onFiltersChange={setFilters}
+            onFiltersChange={handleFiltersChange}
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
           />
@@ -124,13 +139,21 @@ const Index = () => {
           {/* Main content area */}
           <div className="flex-1 flex flex-col lg:flex-row min-h-0">
             {/* Map */}
-            <div className="flex-1 h-[50vh] lg:h-auto">
+            <div className="flex-1 h-[50vh] lg:h-auto relative">
               <JobMap
                 jobs={filteredJobs}
                 selectedLocationId={selectedLocationId}
                 onLocationSelect={handleLocationSelect}
                 userLocation={userLocation}
               />
+              {/* Subtle updating feedback */}
+              {isUpdating && (
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
+                  <span className="text-xs text-muted-foreground bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border shadow-sm">
+                    Updating results…
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Job list */}
