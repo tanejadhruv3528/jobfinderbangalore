@@ -21,13 +21,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing token on mount
     const token = getToken();
     if (token) {
-      // Decode JWT to get user info (basic decode, no verification)
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser({ id: payload.sub || payload.id, email: payload.email });
+        // Check token expiry to prevent using stale/expired tokens
+        const isExpired = payload.exp && payload.exp * 1000 < Date.now();
+        if (isExpired) {
+          removeToken();
+        } else {
+          setUser({ id: payload.sub || payload.id, email: payload.email });
+        }
       } catch {
         removeToken();
       }

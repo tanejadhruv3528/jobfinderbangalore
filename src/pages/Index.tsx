@@ -14,7 +14,7 @@ const Index = () => {
   const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     distance: 50,
     role: 'All Roles',
