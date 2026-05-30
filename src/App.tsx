@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import PostAJob from "./pages/PostAJob";
 import MyJobs from "./pages/MyJobs";
 import NotFound from "./pages/NotFound";
+import { Analytics } from "@vercel/analytics/react";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
             />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <Analytics />
         </TooltipProvider>
       </AuthProvider>
     </BrowserRouter>
