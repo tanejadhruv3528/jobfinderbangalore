@@ -7,7 +7,9 @@ ALTER TABLE IF EXISTS public.jobs RENAME TO legacy_jobs;
 ALTER TABLE IF EXISTS public.employers RENAME TO legacy_employers;
 ALTER TABLE IF EXISTS public.legacy_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.legacy_employers ENABLE ROW LEVEL SECURITY;
--- No policies on legacy tables: they are unreachable through the public API.
+ALTER TABLE IF EXISTS public.raw_crawl_jobs ENABLE ROW LEVEL SECURITY;
+-- No policies on legacy or crawl tables: they are unreachable through the public API
+-- (a direct Postgres connection, as a crawler would use, is not affected by RLS).
 
 -- Employer profile, one per auth user
 CREATE TABLE public.profiles (
