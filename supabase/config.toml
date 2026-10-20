@@ -1,1 +1,8 @@
 project_id = "jaovcgfdgksjjvbjjsne"
+
+# Called by pg_cron with x-cron-secret, not with a user JWT
+[functions.crawl-jobs]
+verify_jwt = false
+
+[functions.recheck-jobs]
+verify_jwt = false
