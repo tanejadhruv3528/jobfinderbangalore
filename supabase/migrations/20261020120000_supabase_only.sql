@@ -1,7 +1,7 @@
 -- JobPins: move from the Express API to Supabase Auth + row-level security.
 -- Runs on the "Job Pins V2" project (jaovcgfdgksjjvbjjsne).
--- The old Express tables are kept as legacy_* so their data can be migrated
--- in a follow-up once the project is unpaused and the rows have been checked.
+-- The old Express tables are kept as legacy_* so the next migration can copy
+-- their employers and jobs across.
 
 ALTER TABLE IF EXISTS public.jobs RENAME TO legacy_jobs;
 ALTER TABLE IF EXISTS public.employers RENAME TO legacy_employers;
