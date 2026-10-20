@@ -79,16 +79,16 @@ const Header = () => {
             <>
               {!isEmployerSection ? (
                 <>
-                  <Link to="/">
-                    <Button variant="hero" size="sm" className="hidden sm:flex">
-                      <Briefcase className="w-4 h-4 mr-2" />
-                      Browse Jobs
+                  <Link to="/auth">
+                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                      <User className="w-4 h-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Employer login</span>
                     </Button>
                   </Link>
-                  <Link to="/auth">
-                    <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-foreground">
-                      <User className="w-4 h-4 mr-2" />
-                      Employer Login
+                  <Link to="/post-a-job">
+                    <Button variant="hero" size="sm">
+                      <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                      Post a job
                     </Button>
                   </Link>
                 </>

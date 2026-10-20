@@ -32,3 +32,11 @@ export function formatDistance(km: number): string {
   }
   return `${km.toFixed(1)} km away`;
 }
+
+export const BANGALORE_CENTER = { lat: 12.9716, lng: 77.5946 };
+
+/** Use the visitor's position only when they are in or near Bangalore. */
+export function nearBangaloreOrCenter(position: { lat: number; lng: number }): { lat: number; lng: number } {
+  const km = calculateDistance(position.lat, position.lng, BANGALORE_CENTER.lat, BANGALORE_CENTER.lng);
+  return km <= 60 ? position : BANGALORE_CENTER;
+}
