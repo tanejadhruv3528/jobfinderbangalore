@@ -15,7 +15,7 @@ interface FilterSidebarProps {
 }
 
 const roles = ['All Roles', 'Engineering', 'Data Science', 'Consulting', 'Finance', 'Research', 'Design', 'Marketing'];
-const jobTypes = ['All Types', 'full-time', 'part-time', 'contract', 'remote'];
+const jobTypes = ['All Types', 'full-time', 'part-time', 'contract', 'internship'];
 
 const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSidebarProps) => {
   const handleFilterChange = (key: keyof FilterState, value: string | number) => {

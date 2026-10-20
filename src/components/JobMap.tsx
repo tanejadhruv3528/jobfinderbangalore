@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Location, Job } from '@/types';
 
 // Mapbox public access token
-const MAPBOX_TOKEN = 'pk.eyJ1IjoidGFuZWphLWRocnV2IiwiYSI6ImNtazFrYmw0NzA1OWUzZHF3NWczYnN0NHcifQ.-ZdRZgv8qdygmFOjPQwY2w';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGFuZWphLWRocnV2IiwiYSI6ImNtazFrYmw0NzA1OWUzZHF3NWczYnN0NHcifQ.-ZdRZgv8qdygmFOjPQwY2w';
 
 // Default center: Bangalore, India
 const DEFAULT_CENTER: [number, number] = [77.5946, 12.9716]; // [lng, lat]

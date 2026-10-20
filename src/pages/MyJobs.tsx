@@ -16,7 +16,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { fetchMyJobs, deleteJob } from '@/services/apiJobService';
+import { fetchMyJobs, deleteJob } from '@/services/jobService';
+import { useAuth } from '@/contexts/AuthContext';
 import { Job } from '@/types';
 import Header from '@/components/Header';
 
@@ -42,13 +43,16 @@ const MyJobs = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Fetch jobs on mount (protected route ensures user is authenticated)
   useEffect(() => {
+    if (!user) return;
+
     const loadJobs = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchMyJobs();
+        const data = await fetchMyJobs(user.id);
         setJobs(data);
       } catch (error) {
         console.error('Error fetching jobs:', error);
@@ -63,7 +67,7 @@ const MyJobs = () => {
     };
 
     loadJobs();
-  }, [toast]);
+  }, [toast, user]);
 
   const handleDeleteJob = async (jobId: string) => {
     setDeletingJobId(jobId);

@@ -10,14 +10,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { createJob } from "@/services/apiJobService";
+import { createJob } from "@/services/jobService";
+import { extractLatLngFromGoogleMaps } from "@/lib/maps";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapPin, CheckCircle, Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   title: z.string().trim().min(1, "Job title is required").max(100, "Job title must be less than 100 characters"),
   description: z.string().trim().min(1, "Job description is required").max(5000, "Job description must be less than 5000 characters"),
-  maps_url: z.string().trim().min(1, "Google Maps link is required"),
+  maps_url: z
+    .string()
+    .trim()
+    .min(1, "Google Maps link is required")
+    .refine((url) => extractLatLngFromGoogleMaps(url) !== null, {
+      message: "Couldn't find a location in this link. Open the place in Google Maps on a computer and copy the full URL from the address bar.",
+    }),
   apply_url: z.string().trim().url("Please enter a valid URL"),
 });
 
@@ -40,15 +47,20 @@ const PostAJob = () => {
   });
 
   const onSubmit = async (data: FormData) => {
+    const coords = extractLatLngFromGoogleMaps(data.maps_url);
+    if (!user || !coords) return;
+
     setIsSubmitting(true);
 
     try {
       await createJob({
+        employerId: user.id,
+        companyName: user.companyName || user.email,
         title: data.title,
         description: data.description,
-        maps_url: data.maps_url,
-        apply_url: data.apply_url,
-        contact_email: user?.email || '',
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        applyUrl: data.apply_url,
       });
 
       setIsSuccess(true);

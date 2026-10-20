@@ -1,3 +1,5 @@
+import type { JobType } from '@/integrations/supabase/types';
+
 export interface Company {
   id: string;
   name: string;
@@ -23,7 +25,7 @@ export interface Job {
   role: string;
   experience: string;
   salary: string;
-  jobType: 'full-time' | 'part-time' | 'contract' | 'remote';
+  jobType: JobType;
   description: string;
   applyUrl: string;
   isFeatured: boolean;

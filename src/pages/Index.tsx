@@ -6,7 +6,7 @@ import FilterSidebar from '@/components/FilterSidebar';
 import JobMap from '@/components/JobMap';
 import JobList from '@/components/JobList';
 import { FilterState, Job } from '@/types';
-import { fetchJobsFromApi } from '@/services/apiJobService';
+import { fetchJobs } from '@/services/jobService';
 import { useQuery } from '@tanstack/react-query';
 
 const Index = () => {
@@ -25,7 +25,7 @@ const Index = () => {
   // Fetch jobs from API
   const { data: apiJobs, isLoading } = useQuery({
     queryKey: ['jobs'],
-    queryFn: fetchJobsFromApi,
+    queryFn: fetchJobs,
   });
 
   // Show "Updating results..." briefly when filters change
