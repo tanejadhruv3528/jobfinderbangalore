@@ -17,9 +17,8 @@ const fingerprint = async (job: RawJob): Promise<string> => {
 };
 
 Deno.serve(async (req) => {
-  if (!isAuthorised(req)) return json({ error: 'unauthorised' }, 401);
-
   const db = adminClient();
+  if (!(await isAuthorised(req, db))) return json({ error: 'unauthorised' }, 401);
   const runId = await startRun(db, 'crawl');
   const stats = { queries: 0, api_calls: 0, found: 0, seen_again: 0, inserted: 0, rejected: 0, unlocated: 0, used_claude: false };
 

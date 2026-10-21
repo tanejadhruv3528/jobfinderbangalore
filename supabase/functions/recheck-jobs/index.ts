@@ -33,9 +33,8 @@ const checkLink = async (url: string): Promise<Verdict> => {
 };
 
 Deno.serve(async (req) => {
-  if (!isAuthorised(req)) return json({ error: 'unauthorised' }, 401);
-
   const db = adminClient();
+  if (!(await isAuthorised(req, db))) return json({ error: 'unauthorised' }, 401);
   const runId = await startRun(db, 'recheck');
   const stats = { checked: 0, still_active: 0, expired_dead_link: 0, expired_stale: 0 };
 

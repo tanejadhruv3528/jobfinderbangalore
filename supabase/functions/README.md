@@ -27,17 +27,16 @@ Apply the migrations in `supabase/migrations` after the Supabase-only migrations
 2. **Edge Function secrets** (Dashboard, Edge Functions, Secrets, or `supabase secrets set`):
    - `JOBS_API_KEY`: the key from step 1
    - `JOBS_PROVIDER`: `serpapi` (default) or `searchapi`
-   - `CRON_SECRET`: any long random string
    - `ANTHROPIC_API_KEY` (optional): turns on Claude analysis. Without it, simple keyword rules are used and fewer jobs get an area pin.
 3. **Deploy:** `supabase functions deploy crawl-jobs` and `supabase functions deploy recheck-jobs`.
-4. **Vault secrets** for pg_cron (SQL editor), using the same `CRON_SECRET`:
+4. **Vault secrets** for pg_cron (SQL editor). The functions check the `x-cron-secret` header against the same Vault entry:
    ```sql
    SELECT vault.create_secret('https://jaovcgfdgksjjvbjjsne.supabase.co', 'project_url');
-   SELECT vault.create_secret('<CRON_SECRET>', 'crawler_cron_secret');
+   SELECT vault.create_secret(encode(extensions.gen_random_bytes(32), 'hex'), 'crawler_cron_secret');
    ```
-5. **Try it once:**
-   ```bash
-   curl -X POST https://jaovcgfdgksjjvbjjsne.supabase.co/functions/v1/crawl-jobs -H "x-cron-secret: <CRON_SECRET>"
+5. **Try it once** (SQL editor), then look at `crawl_runs`:
+   ```sql
+   SELECT private.invoke_crawler_function('crawl-jobs');
    ```
 
 ## Tuning

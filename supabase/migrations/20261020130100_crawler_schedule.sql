@@ -28,6 +28,19 @@ $$;
 
 REVOKE ALL ON FUNCTION private.invoke_crawler_function(TEXT) FROM PUBLIC, anon, authenticated;
 
+-- Lets the Edge Functions (service role only) check the x-cron-secret header
+-- against the same Vault entry pg_cron sends.
+CREATE OR REPLACE FUNCTION public.crawler_cron_secret()
+RETURNS TEXT
+LANGUAGE sql
+SECURITY DEFINER SET search_path = ''
+AS $$
+  SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'crawler_cron_secret';
+$$;
+
+REVOKE ALL ON FUNCTION public.crawler_cron_secret() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.crawler_cron_secret() TO service_role;
+
 -- 06:00 IST
 SELECT cron.schedule('crawl-jobs-daily', '30 0 * * *',
   $$SELECT private.invoke_crawler_function('crawl-jobs')$$);

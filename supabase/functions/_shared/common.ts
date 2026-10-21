@@ -1,10 +1,17 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2.118.0';
 
 // The functions are called by pg_cron with a shared secret, not by the site,
-// so a leaked public key can't burn the jobs API quota.
-export const isAuthorised = (req: Request): boolean => {
-  const secret = Deno.env.get('CRON_SECRET');
-  return !!secret && req.headers.get('x-cron-secret') === secret;
+// so a leaked public key can't burn the jobs API quota. The secret lives in Vault
+// (crawler_cron_secret); CRON_SECRET overrides it for local runs.
+export const isAuthorised = async (req: Request, db: SupabaseClient): Promise<boolean> => {
+  const given = req.headers.get('x-cron-secret');
+  if (!given) return false;
+  let secret = Deno.env.get('CRON_SECRET');
+  if (!secret) {
+    const { data } = await db.rpc('crawler_cron_secret');
+    secret = typeof data === 'string' ? data : undefined;
+  }
+  return !!secret && given === secret;
 };
 
 // Service-role client: bypasses RLS, server side only.
