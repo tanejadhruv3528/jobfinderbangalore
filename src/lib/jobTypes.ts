@@ -8,3 +8,11 @@ export const JOB_TYPE_LABELS: Record<JobType, string> = {
 };
 
 export const JOB_TYPES = Object.keys(JOB_TYPE_LABELS) as JobType[];
+
+/** Badge variant for each job type */
+export const JOB_TYPE_BADGE = {
+  'full-time': 'fulltime',
+  'part-time': 'parttime',
+  contract: 'contract',
+  internship: 'internship',
+} as const satisfies Record<JobType, string>;

@@ -40,10 +40,14 @@ export interface JobSource {
   sourceUrl: string;
 }
 
+export type SortOrder = 'nearest' | 'newest';
+
 export interface FilterState {
+  /** Max distance in km from the visitor; 0 means anywhere in the city */
   distance: number;
-  jobType: string;
+  jobType: JobType | 'all';
   searchQuery: string;
+  sort: SortOrder;
 }
 
 export interface MapViewport {

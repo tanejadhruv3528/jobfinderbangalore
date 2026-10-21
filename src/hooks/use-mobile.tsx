@@ -1,19 +1,17 @@
 import * as React from "react";
 
-const MOBILE_BREAKPOINT = 768;
+/** Matches the `lg` breakpoint where the map page switches to its side-by-side layout. */
+const DESKTOP_QUERY = "(min-width: 1024px)";
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
+export function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = React.useState(() => window.matchMedia(DESKTOP_QUERY).matches);
 
   React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-    const onChange = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    };
+    const mql = window.matchMedia(DESKTOP_QUERY);
+    const onChange = () => setIsDesktop(mql.matches);
     mql.addEventListener("change", onChange);
-    setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     return () => mql.removeEventListener("change", onChange);
   }, []);
 
-  return !!isMobile;
+  return isDesktop;
 }

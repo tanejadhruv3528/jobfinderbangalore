@@ -1,164 +1,134 @@
-import { Briefcase, AlertCircle } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, MapPinOff, RotateCw, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import JobCard from '@/components/JobCard';
+import JobCardSkeleton from '@/components/JobCardSkeleton';
 import { Job } from '@/types';
-import JobCard from './JobCard';
-import JobCardSkeleton from './JobCardSkeleton';
-import { useEffect, useRef, useMemo } from 'react';
-import { calculateDistance } from '@/lib/distance';
 
 interface JobListProps {
   jobs: Job[];
-  selectedLocationId: string | null;
-  onJobSelect: (job: Job) => void;
+  distances: Map<string, number>;
+  activeJobId: string | null;
+  onJobOpen: (job: Job) => void;
   isLoading?: boolean;
   error?: Error | null;
   onRetry?: () => void;
-  userLocation: { lat: number; lng: number } | null;
+  hasActiveFilters: boolean;
+  onClearFilters: () => void;
+  subtitle: string;
 }
 
-const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, error, onRetry, userLocation }: JobListProps) => {
-  const jobRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+const EmptyState = ({
+  icon: Icon,
+  title,
+  body,
+  action,
+}: {
+  icon: typeof WifiOff;
+  title: string;
+  body: string;
+  action?: React.ReactNode;
+}) => (
+  <div className="flex flex-col items-center px-6 py-16 text-center">
+    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary">
+      <Icon className="h-6 w-6 text-muted-foreground" />
+    </div>
+    <h3 className="mt-5 text-xl font-bold">{title}</h3>
+    <p className="mt-1.5 max-w-[280px] text-sm text-muted-foreground">{body}</p>
+    {action && <div className="mt-5">{action}</div>}
+  </div>
+);
 
-  // Calculate distances for each job
-  const jobDistances = useMemo(() => {
-    const distances = new Map<string, number>();
-    if (!userLocation) return distances;
-    
-    jobs.forEach(job => {
-      if (job.location?.latitude && job.location?.longitude) {
-        const dist = calculateDistance(
-          userLocation.lat,
-          userLocation.lng,
-          job.location.latitude,
-          job.location.longitude
-        );
-        distances.set(job.id, dist);
-      }
-    });
-    return distances;
-  }, [jobs, userLocation]);
+const JobList = ({
+  jobs,
+  distances,
+  activeJobId,
+  onJobOpen,
+  isLoading,
+  error,
+  onRetry,
+  hasActiveFilters,
+  onClearFilters,
+  subtitle,
+}: JobListProps) => {
+  const refs = useRef<Map<string, HTMLElement>>(new Map());
 
-  const featuredJobs = jobs.filter(job => job.isFeatured);
-  const regularJobs = jobs.filter(job => !job.isFeatured);
-
-  // Scroll to first highlighted job when selectedLocationId changes
+  // Keep the job picked on the map in view
   useEffect(() => {
-    if (!selectedLocationId) return;
-
-    const firstMatchingJob = jobs.find(job => job.locationId === selectedLocationId);
-    if (firstMatchingJob) {
-      const element = jobRefs.current.get(firstMatchingJob.id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  }, [selectedLocationId, jobs]);
-
-  const setJobRef = (jobId: string) => (el: HTMLDivElement | null) => {
-    if (el) {
-      jobRefs.current.set(jobId, el);
-    } else {
-      jobRefs.current.delete(jobId);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <div className="flex items-center gap-2.5">
-            <Briefcase className="w-5 h-5 text-primary" />
-            <span className="font-semibold text-base text-muted-foreground">Loading jobs...</span>
-          </div>
-        </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          <JobCardSkeleton isCompact />
-          <JobCardSkeleton isCompact />
-          <JobCardSkeleton isCompact />
-        </div>
-      </div>
-    );
-  }
+    if (activeJobId) refs.current.get(activeJobId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, [activeJobId]);
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <div className="flex items-center gap-2.5">
-          <Briefcase className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-base">
-            {error ? 'Jobs unavailable' : `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} in Bangalore`}
-          </span>
-        </div>
+    <div className="scrollbar-thin h-full overflow-y-auto">
+      <div className="sticky top-0 z-10 border-b border-border/70 bg-background/90 px-4 pb-3 pt-5 backdrop-blur md:px-5">
+        <h1 className="text-2xl font-bold leading-tight">
+          {isLoading ? 'Finding jobs…' : error ? 'Jobs unavailable' : `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} near you`}
+        </h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        {error ? (
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-5">
-              <AlertCircle className="w-8 h-8 text-destructive" />
-            </div>
-            <h3 className="font-semibold text-lg mb-2">Couldn't load jobs</h3>
-            <p className="text-sm text-muted-foreground max-w-[240px] mb-5">
-              Check your connection and try again.
-            </p>
-            {onRetry && (
-              <Button variant="outline" size="sm" onClick={onRetry}>
-                Try again
-              </Button>
-            )}
-          </div>
+      <div className="space-y-2.5 p-4 pb-24 md:px-5 lg:pb-6">
+        {isLoading ? (
+          Array.from({ length: 5 }, (_, i) => <JobCardSkeleton key={i} />)
+        ) : error ? (
+          <EmptyState
+            icon={WifiOff}
+            title="Couldn't load jobs"
+            body="Check your connection and try again."
+            action={
+              onRetry && (
+                <Button variant="outline" onClick={onRetry}>
+                  <RotateCw />
+                  Try again
+                </Button>
+              )
+            }
+          />
         ) : jobs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-5">
-              <Briefcase className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="font-semibold text-lg mb-2">No jobs found</h3>
-            <p className="text-sm text-muted-foreground max-w-[200px]">
-              Try a larger distance or clear your search
-            </p>
-          </div>
+          <EmptyState
+            icon={MapPinOff}
+            title="No jobs match"
+            body={hasActiveFilters ? 'Try a wider distance or a different search.' : 'New jobs are pinned every day. Check back soon.'}
+            action={
+              hasActiveFilters && (
+                <Button variant="outline" onClick={onClearFilters}>
+                  Clear filters
+                </Button>
+              )
+            }
+          />
         ) : (
-          <div className="space-y-4">
-            {/* Featured jobs first */}
-            {featuredJobs.length > 0 && (
-              <>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pb-1">
-                  Featured
-                </p>
-                {featuredJobs.map(job => (
-                  <JobCard
-                    key={job.id}
-                    ref={setJobRef(job.id)}
-                    job={job}
-                    isHighlighted={job.locationId === selectedLocationId}
-                    onSelect={onJobSelect}
-                    distance={jobDistances.get(job.id)}
-                  />
-                ))}
-              </>
-            )}
+          jobs.map((job, i) => (
+            <JobCard
+              key={job.id}
+              ref={(el) => {
+                if (el) refs.current.set(job.id, el);
+                else refs.current.delete(job.id);
+              }}
+              job={job}
+              distance={distances.get(job.id)}
+              isSelected={job.id === activeJobId}
+              onSelect={onJobOpen}
+              className="animate-fade-up"
+              style={{ animationDelay: `${Math.min(i, 8) * 30}ms` }}
+            />
+          ))
+        )}
 
-            {/* Regular jobs */}
-            {regularJobs.length > 0 && (
-              <>
-                {featuredJobs.length > 0 && (
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-6 pb-1">
-                    All Jobs
-                  </p>
-                )}
-                {regularJobs.map(job => (
-                  <JobCard
-                    key={job.id}
-                    ref={setJobRef(job.id)}
-                    job={job}
-                    isHighlighted={job.locationId === selectedLocationId}
-                    onSelect={onJobSelect}
-                    distance={jobDistances.get(job.id)}
-                  />
-                ))}
-              </>
-            )}
-          </div>
+        {!isLoading && (
+          <Link
+            to="/post-a-job"
+            className="group mt-4 flex items-center justify-between gap-4 overflow-hidden rounded-2xl bg-ink p-5 text-ink-foreground"
+          >
+            <div>
+              <p className="font-display text-lg font-bold leading-tight">Hiring in Bangalore?</p>
+              <p className="mt-1 text-sm text-ink-foreground/70">Pin your job on the map for free. It goes live instantly.</p>
+            </div>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary transition-transform group-hover:translate-x-0.5">
+              <ArrowRight className="h-4 w-4" />
+            </span>
+          </Link>
         )}
       </div>
     </div>

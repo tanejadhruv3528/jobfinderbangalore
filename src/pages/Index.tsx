@@ -1,170 +1,196 @@
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Menu, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { List, Map as MapIcon } from 'lucide-react';
 import Header from '@/components/Header';
-import FilterSidebar from '@/components/FilterSidebar';
+import FilterBar, { DEFAULT_FILTERS } from '@/components/FilterBar';
 import JobMap from '@/components/JobMap';
 import JobList from '@/components/JobList';
+import JobDetail from '@/components/JobDetail';
+import JobCarousel from '@/components/JobCarousel';
 import { FilterState, Job } from '@/types';
 import { fetchJobs } from '@/services/jobService';
-import { useQuery } from '@tanstack/react-query';
 import { BANGALORE_CENTER, calculateDistance, nearBangaloreOrCenter } from '@/lib/distance';
+import { useIsDesktop } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+
+// Height of the floating list button plus the card row on phones
+const CAROUSEL_HEIGHT = 260;
 
 const Index = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(null);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isUpdating, setIsUpdating] = useState(false);
-  const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [filters, setFilters] = useState<FilterState>({
-    distance: 50,
-    jobType: 'All Types',
-    searchQuery: '',
-  });
+  const isDesktop = useIsDesktop();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openJobId = searchParams.get('job');
+  const [activeJobId, setActiveJobId] = useState<string | null>(openJobId);
+  const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
+  const [userLocation, setUserLocation] = useState(BANGALORE_CENTER);
+  const [usingRealLocation, setUsingRealLocation] = useState(false);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
 
-  // Fetch jobs from API
-  const { data: apiJobs, isLoading, error, refetch } = useQuery({
+  const { data: allJobs = [], isLoading, error, refetch } = useQuery({
     queryKey: ['jobs'],
     queryFn: fetchJobs,
   });
 
-  // Show "Updating results..." briefly when filters change
-  const handleFiltersChange = useCallback((newFilters: FilterState) => {
-    setFilters(newFilters);
-    setIsUpdating(true);
-    
-    if (updateTimeoutRef.current) {
-      clearTimeout(updateTimeoutRef.current);
-    }
-    updateTimeoutRef.current = setTimeout(() => {
-      setIsUpdating(false);
-    }, 400);
+  // Use the visitor's position when they are in Bangalore, otherwise the city centre
+  useEffect(() => {
+    navigator.geolocation?.getCurrentPosition((position) => {
+      const near = nearBangaloreOrCenter({ lat: position.coords.latitude, lng: position.coords.longitude });
+      setUserLocation(near);
+      setUsingRealLocation(near !== BANGALORE_CENTER);
+    });
   }, []);
 
-  // Use API jobs
-  const allJobs = useMemo(() => {
-    return apiJobs || [];
-  }, [apiJobs]);
-
-  // Filter jobs based on current filters
-  const filteredJobs = useMemo(() => {
-    return allJobs.filter(job => {
-      // Search query filter
-      if (filters.searchQuery) {
-        const query = filters.searchQuery.toLowerCase();
-        const matchesSearch = 
-          job.title.toLowerCase().includes(query) ||
-          job.company?.name.toLowerCase().includes(query) ||
-          job.description.toLowerCase().includes(query);
-        if (!matchesSearch) return false;
+  const distances = useMemo(() => {
+    const map = new Map<string, number>();
+    allJobs.forEach((job) => {
+      if (job.location) {
+        map.set(job.id, calculateDistance(userLocation.lat, userLocation.lng, job.location.latitude, job.location.longitude));
       }
+    });
+    return map;
+  }, [allJobs, userLocation]);
 
-      // Job type filter
-      if (filters.jobType !== 'All Types' && job.jobType !== filters.jobType) {
-        return false;
+  const jobs = useMemo(() => {
+    const query = filters.searchQuery.trim().toLowerCase();
+    const filtered = allJobs.filter((job) => {
+      if (query) {
+        const haystack = `${job.title} ${job.company?.name ?? ''} ${job.location?.address ?? ''} ${job.description}`.toLowerCase();
+        if (!query.split(/\s+/).every((word) => haystack.includes(word))) return false;
       }
-
-      // Distance filter, measured from the visitor (or the city centre)
-      if (userLocation && job.location) {
-        const km = calculateDistance(userLocation.lat, userLocation.lng, job.location.latitude, job.location.longitude);
-        if (km > filters.distance) return false;
-      }
-
+      if (filters.jobType !== 'all' && job.jobType !== filters.jobType) return false;
+      if (filters.distance > 0 && (distances.get(job.id) ?? Infinity) > filters.distance) return false;
       return true;
     });
-  }, [allJobs, filters, userLocation]);
 
-  // Auto-detect user location on mount
-  useEffect(() => {
-    // Start from the city centre; switch to the visitor's position if they are in Bangalore
-    setUserLocation(BANGALORE_CENTER);
-    navigator.geolocation?.getCurrentPosition((position) => {
-      setUserLocation(nearBangaloreOrCenter({
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      }));
+    return filtered.sort((a, b) => {
+      if (a.isFeatured !== b.isFeatured) return a.isFeatured ? -1 : 1;
+      if (filters.sort === 'nearest') return (distances.get(a.id) ?? Infinity) - (distances.get(b.id) ?? Infinity);
+      return b.createdAt.localeCompare(a.createdAt);
     });
-  }, []);
+  }, [allJobs, filters, distances]);
 
-  // Handle job card click - select its location
-  const handleJobSelect = useCallback((job: Job) => {
-    setSelectedLocationId(job.locationId);
-  }, []);
+  const openJob = useMemo(() => allJobs.find((job) => job.id === openJobId) ?? null, [allJobs, openJobId]);
 
-  // Handle location select from map
-  const handleLocationSelect = useCallback((locationId: string | null) => {
-    setSelectedLocationId(locationId);
-  }, []);
+  const openDetail = useCallback(
+    (job: Job) => {
+      setActiveJobId(job.id);
+      setSearchParams({ job: job.id });
+    },
+    [setSearchParams],
+  );
+
+  const closeDetail = useCallback(() => setSearchParams({}), [setSearchParams]);
+
+  const handlePinSelect = useCallback(
+    (jobId: string | null) => {
+      setActiveJobId(jobId);
+      if (isDesktop) setSearchParams(jobId ? { job: jobId } : {});
+    },
+    [isDesktop, setSearchParams],
+  );
+
+  // On phones, the carousel's first card is selected by default so a pin is always highlighted
+  useEffect(() => {
+    if (!isDesktop && mobileView === 'map' && jobs.length > 0 && !jobs.some((j) => j.id === activeJobId)) {
+      setActiveJobId(jobs[0].id);
+    }
+  }, [isDesktop, mobileView, jobs, activeJobId]);
+
+  const hasActiveFilters =
+    filters.searchQuery !== '' || filters.jobType !== 'all' || filters.distance > 0;
+  const subtitle = `In Bangalore · ${filters.sort === 'nearest' ? (usingRealLocation ? 'nearest to you first' : 'nearest to the city centre first') : 'newest first'}`;
+
+  const list = (
+    <JobList
+      jobs={jobs}
+      distances={distances}
+      activeJobId={activeJobId}
+      onJobOpen={openDetail}
+      isLoading={isLoading}
+      error={error}
+      onRetry={() => refetch()}
+      hasActiveFilters={hasActiveFilters}
+      onClearFilters={() => setFilters(DEFAULT_FILTERS)}
+      subtitle={subtitle}
+    />
+  );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex h-[100dvh] flex-col bg-background">
       <Header />
-      
-      <main className="pt-16 h-screen flex flex-col">
-        {/* Hero Section */}
-        <div className="border-b border-border px-4 md:px-6 py-3 flex flex-col md:flex-row md:items-baseline gap-x-3">
-          <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight">
-            Jobs near you in Bangalore
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Tap a pin to see the job, then apply directly with the employer.
-          </p>
+
+      <div className="border-b border-border bg-background px-4 py-3 md:px-6">
+        <div className="mx-auto max-w-[1600px]">
+          <FilterBar filters={filters} onChange={setFilters} />
         </div>
+      </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-          {/* Mobile filter toggle */}
-          <Button
-            variant="filter"
-            size="icon"
-            className="fixed bottom-4 left-4 z-30 lg:hidden shadow-lg"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </Button>
-
-          {/* Filter Sidebar */}
-          <FilterSidebar
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-          />
-
-          {/* Main content area */}
-          <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-            {/* Map */}
-            <div className="h-[45vh] flex-none lg:h-auto lg:flex-1 relative">
+      <main className="relative flex min-h-0 flex-1">
+        {isDesktop ? (
+          <>
+            <aside className="w-[440px] shrink-0 border-r border-border bg-background xl:w-[480px]">
+              {openJob ? (
+                <JobDetail key={openJob.id} job={openJob} distance={distances.get(openJob.id)} onClose={closeDetail} />
+              ) : (
+                list
+              )}
+            </aside>
+            <div className="relative flex-1">
+              <JobMap jobs={jobs} selectedJobId={activeJobId} onJobSelect={handlePinSelect} userLocation={userLocation} />
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="absolute inset-0">
               <JobMap
-                jobs={filteredJobs}
-                selectedLocationId={selectedLocationId}
-                onLocationSelect={handleLocationSelect}
+                jobs={jobs}
+                selectedJobId={activeJobId}
+                onJobSelect={handlePinSelect}
                 userLocation={userLocation}
+                bottomInset={CAROUSEL_HEIGHT}
               />
-              {/* Subtle updating feedback */}
-              {isUpdating && (
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10">
-                  <span className="text-xs text-muted-foreground bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border shadow-sm">
-                    Updating results…
-                  </span>
+            </div>
+
+            {mobileView === 'list' && <div className="absolute inset-0 z-20 bg-background">{list}</div>}
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 pb-safe">
+              <div className="flex justify-center pb-3">
+                <button
+                  type="button"
+                  onClick={() => setMobileView(mobileView === 'map' ? 'list' : 'map')}
+                  className="pointer-events-auto flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-ink-foreground shadow-pop transition-transform active:scale-95"
+                >
+                  {mobileView === 'map' ? <List className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
+                  {mobileView === 'map' ? `List${isLoading ? '' : ` · ${jobs.length}`}` : 'Map'}
+                </button>
+              </div>
+              {mobileView === 'map' && (
+                <div className="pointer-events-auto">
+                  <JobCarousel
+                    jobs={jobs}
+                    distances={distances}
+                    activeJobId={activeJobId}
+                    onActiveChange={setActiveJobId}
+                    onJobOpen={openDetail}
+                  />
                 </div>
               )}
             </div>
 
-            {/* Job list */}
-            <div className="w-full lg:w-96 flex-1 min-h-0 lg:flex-none lg:h-auto bg-card border-t lg:border-t-0 lg:border-l border-border overflow-hidden">
-              <JobList
-                jobs={filteredJobs}
-                selectedLocationId={selectedLocationId}
-                onJobSelect={handleJobSelect}
-                isLoading={isLoading}
-                error={error}
-                onRetry={() => refetch()}
-                userLocation={userLocation}
-              />
-            </div>
-          </div>
-        </div>
+            {openJob && (
+              <div className={cn('fixed inset-0 z-[60] animate-slide-up bg-card')}>
+                <JobDetail
+                  key={openJob.id}
+                  job={openJob}
+                  distance={distances.get(openJob.id)}
+                  onClose={closeDetail}
+                  closeIcon
+                />
+              </div>
+            )}
+          </>
+        )}
       </main>
     </div>
   );

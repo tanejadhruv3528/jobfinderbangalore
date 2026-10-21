@@ -27,10 +27,13 @@ function toRad(deg: number): number {
  * Format distance for display
  */
 export function formatDistance(km: number): string {
-  if (km < 1) {
-    return `${Math.round(km * 1000)} m away`;
+  if (km < 0.1) {
+    return 'Nearby';
   }
-  return `${km.toFixed(1)} km away`;
+  if (km < 1) {
+    return `${Math.round(km * 1000)} m`;
+  }
+  return `${km < 10 ? km.toFixed(1) : Math.round(km)} km`;
 }
 
 export const BANGALORE_CENTER = { lat: 12.9716, lng: 77.5946 };
