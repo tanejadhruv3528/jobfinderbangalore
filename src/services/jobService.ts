@@ -7,7 +7,7 @@ type JobRow = Database['public']['Tables']['jobs']['Row'];
 // Transform a database row to the frontend Job type
 const transformJob = (job: JobRow): Job => ({
   id: job.id,
-  companyId: job.employer_id,
+  companyId: job.employer_id ?? '',
   locationId: job.id,
   title: job.title,
   role: 'General',
@@ -19,7 +19,7 @@ const transformJob = (job: JobRow): Job => ({
   isFeatured: job.is_featured,
   createdAt: job.created_at,
   company: {
-    id: job.employer_id,
+    id: job.employer_id ?? '',
     name: job.company_name,
     industry: '',
     website: '',
@@ -39,6 +39,7 @@ export const fetchJobs = async (): Promise<Job[]> => {
   const { data, error } = await supabase
     .from('jobs')
     .select('*')
+    .eq('status', 'active')
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
