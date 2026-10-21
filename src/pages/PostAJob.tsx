@@ -344,10 +344,10 @@ const PostAJob = () => {
                 Live preview
               </p>
               <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-lift">
-                <div className="relative h-44 bg-[#f2efe9]">
+                <div className="relative h-44 bg-secondary">
                   {coords ? (
                     <img
-                      src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${coords.longitude},${coords.latitude},14.5,0/720x352@2x?attribution=false&logo=false&access_token=${MAPBOX_TOKEN}`}
+                      src={`https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/${coords.longitude},${coords.latitude},14.5,0/720x352@2x?attribution=false&logo=false&access_token=${MAPBOX_TOKEN}`}
                       alt="Map preview of the job location"
                       className="h-full w-full object-cover"
                     />

@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowUpRight, Briefcase, Calendar, Check, IndianRupee, Link2, MapPin, Navigation, Star, X } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Briefcase, Check, IndianRupee, Link2, MapPin, Navigation, Star, X } from 'lucide-react';
+import CommuteIcon from '@/components/CommuteIcon';
+import { COMMUTE_LABELS, CommuteMode, commuteMinutes, formatMinutes } from '@/lib/commute';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CompanyAvatar from '@/components/CompanyAvatar';
@@ -12,6 +14,7 @@ import { cn } from '@/lib/utils';
 interface JobDetailProps {
   job: Job;
   distance?: number;
+  mode?: CommuteMode;
   onClose: () => void;
   /** Close icon instead of a back arrow (used for the mobile full-screen sheet) */
   closeIcon?: boolean;
@@ -28,7 +31,7 @@ const Fact = ({ icon: Icon, label, value }: { icon: typeof MapPin; label: string
   </div>
 );
 
-const JobDetail = ({ job, distance, onClose, closeIcon = false, className }: JobDetailProps) => {
+const JobDetail = ({ job, distance, mode = 'bike', onClose, closeIcon = false, className }: JobDetailProps) => {
   const [copied, setCopied] = useState(false);
   const companyName = job.company?.name || 'Company';
   const area = job.location?.address || job.location?.city || 'Bangalore';
@@ -96,9 +99,34 @@ const JobDetail = ({ job, distance, onClose, closeIcon = false, className }: Job
           <div className="mt-6 grid grid-cols-2 gap-2.5">
             <Fact icon={IndianRupee} label="Salary" value={job.salary || 'Not disclosed'} />
             <Fact icon={Briefcase} label="Experience" value={job.experience || 'Not specified'} />
-            <Fact icon={Navigation} label="From you" value={distance !== undefined ? formatDistance(distance) : '—'} />
-            <Fact icon={Calendar} label="Posted" value={postedAgo(job.createdAt)} />
           </div>
+
+          {distance !== undefined && (
+            <div className="mt-2.5 rounded-2xl border border-border bg-background/40 p-3.5">
+              <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Navigation className="h-3.5 w-3.5" />
+                  From your home
+                </span>
+                <span>{formatDistance(distance)}</span>
+              </div>
+              <div className="mt-2.5 grid grid-cols-3 gap-2">
+                {(['walk', 'bike', 'car'] as const).map((m) => (
+                  <div
+                    key={m}
+                    className={cn(
+                      'flex flex-col items-center gap-1 rounded-xl py-2.5 text-center',
+                      m === mode ? 'bg-primary/15 text-primary' : 'bg-secondary/60 text-foreground/80',
+                    )}
+                  >
+                    <CommuteIcon mode={m} className="h-4 w-4" />
+                    <span className="text-sm font-semibold">{formatMinutes(commuteMinutes(distance, m))}</span>
+                    <span className="text-[11px] opacity-70">{COMMUTE_LABELS[m]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-8">
             <h3 className="font-sans text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
@@ -131,7 +159,7 @@ const JobDetail = ({ job, distance, onClose, closeIcon = false, className }: Job
         </div>
       </div>
 
-      <div className="pb-safe border-t border-border bg-card/95 px-5 pt-4 backdrop-blur md:px-6">
+      <div className="pb-safe border-t border-border px-5 pt-4 md:px-6">
         <Button size="lg" className="w-full" asChild>
           <a href={job.applyUrl} target="_blank" rel="noopener noreferrer">
             Apply on {companyName.length > 22 ? 'company site' : companyName}

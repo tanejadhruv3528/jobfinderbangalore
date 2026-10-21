@@ -1,9 +1,11 @@
 import { forwardRef } from 'react';
-import { Briefcase, IndianRupee, Navigation, Star } from 'lucide-react';
+import { Briefcase, IndianRupee, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import CompanyAvatar from '@/components/CompanyAvatar';
 import { Job } from '@/types';
 import { formatDistance } from '@/lib/distance';
+import { CommuteMode, commuteMinutes, formatMinutes } from '@/lib/commute';
+import CommuteIcon from '@/components/CommuteIcon';
 import { postedAgo } from '@/lib/format';
 import { JOB_TYPE_BADGE, JOB_TYPE_LABELS } from '@/lib/jobTypes';
 import { cn } from '@/lib/utils';
@@ -13,12 +15,15 @@ interface JobCardProps {
   isSelected?: boolean;
   onSelect?: (job: Job) => void;
   distance?: number;
+  mode?: CommuteMode;
+  isHovered?: boolean;
+  onHover?: (jobId: string | null) => void;
   className?: string;
   style?: React.CSSProperties;
 }
 
 const JobCard = forwardRef<HTMLElement, JobCardProps>(
-  ({ job, isSelected = false, onSelect, distance, className, style }, ref) => {
+  ({ job, isSelected = false, onSelect, distance, mode = 'bike', isHovered = false, onHover, className, style }, ref) => {
     const companyName = job.company?.name || 'Company';
     const area = job.location?.address || job.location?.city;
 
@@ -29,6 +34,8 @@ const JobCard = forwardRef<HTMLElement, JobCardProps>(
         role={onSelect ? 'button' : undefined}
         tabIndex={onSelect ? 0 : undefined}
         onClick={() => onSelect?.(job)}
+        onMouseEnter={() => onHover?.(job.id)}
+        onMouseLeave={() => onHover?.(null)}
         onKeyDown={(e) => {
           if (onSelect && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
@@ -39,7 +46,11 @@ const JobCard = forwardRef<HTMLElement, JobCardProps>(
         className={cn(
           'group relative rounded-2xl border bg-card p-4 text-left transition-all duration-200',
           onSelect && 'cursor-pointer hover:border-foreground/20 hover:shadow-lift focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
-          isSelected ? 'border-primary shadow-lift ring-4 ring-primary/10' : 'border-border shadow-sm',
+          isSelected
+            ? 'border-primary shadow-lift ring-4 ring-primary/15'
+            : isHovered
+              ? 'border-foreground/25 shadow-lift'
+              : 'border-border shadow-sm',
           className,
         )}
       >
@@ -51,9 +62,12 @@ const JobCard = forwardRef<HTMLElement, JobCardProps>(
                 {job.title}
               </h3>
               {distance !== undefined && (
-                <span className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary">
-                  <Navigation className="h-3 w-3 fill-current" />
-                  {formatDistance(distance)}
+                <span
+                  className="mt-0.5 inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-primary"
+                  title={`${formatDistance(distance)} away`}
+                >
+                  <CommuteIcon mode={mode} className="h-3.5 w-3.5" />
+                  {formatMinutes(commuteMinutes(distance, mode))}
                 </span>
               )}
             </div>

@@ -29,14 +29,14 @@ export function initials(name: string): string {
 }
 
 const AVATAR_COLORS = [
-  ['#FDE7DF', '#B53A1B'],
-  ['#E3ECFB', '#2A4FA0'],
-  ['#EDE6FA', '#5B3BA8'],
-  ['#E0F2EA', '#1F6B4A'],
-  ['#FCF0D6', '#8A5A06'],
-  ['#F9E1EC', '#A1295E'],
-  ['#DFF1F4', '#1D6673'],
-  ['#ECE9E4', '#3D3A35'],
+  ['hsl(11 70% 22%)', 'hsl(11 100% 78%)'],
+  ['hsl(217 50% 22%)', 'hsl(217 100% 80%)'],
+  ['hsl(262 40% 24%)', 'hsl(262 100% 84%)'],
+  ['hsl(152 40% 18%)', 'hsl(152 70% 66%)'],
+  ['hsl(40 60% 18%)', 'hsl(42 100% 68%)'],
+  ['hsl(330 45% 22%)', 'hsl(330 100% 82%)'],
+  ['hsl(188 50% 18%)', 'hsl(188 80% 66%)'],
+  ['hsl(230 12% 22%)', 'hsl(230 20% 86%)'],
 ];
 
 /** Stable background/foreground pair for a company name. */

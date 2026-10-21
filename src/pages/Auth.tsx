@@ -18,12 +18,12 @@ const PERKS = [
 /** Decorative map with a few pins, drawn for the brand panel. */
 const BrandMap = () => (
   <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" className="h-full w-full" aria-hidden="true">
-    <g stroke="hsl(var(--ink-foreground) / 0.14)" strokeWidth="10" fill="none" strokeLinecap="round">
+    <g stroke="hsl(0 0% 100% / 0.12)" strokeWidth="10" fill="none" strokeLinecap="round">
       <path d="M-20 210 C 80 190, 140 120, 230 130 S 360 80, 430 60" />
       <path d="M60 -20 C 90 80, 70 160, 120 320" />
       <path d="M260 -20 C 250 90, 300 170, 290 320" />
     </g>
-    <g stroke="hsl(var(--ink-foreground) / 0.07)" strokeWidth="4" fill="none">
+    <g stroke="hsl(0 0% 100% / 0.06)" strokeWidth="4" fill="none">
       <path d="M-20 80 L 430 110" />
       <path d="M-20 260 L 430 240" />
       <path d="M170 -20 L 190 320" />
@@ -40,11 +40,11 @@ const BrandMap = () => (
       <g key={i} transform={`translate(${x as number - (big ? 17 : 12)} ${y as number - (big ? 42 : 30)}) scale(${big ? 1 : 0.7})`}>
         <path
           d="M17 1.5C8.4 1.5 1.5 8.3 1.5 16.8c0 10.6 13.2 22 14.4 23a1.7 1.7 0 0 0 2.2 0c1.2-1 14.4-12.4 14.4-23C32.5 8.3 25.6 1.5 17 1.5Z"
-          fill={big ? 'hsl(var(--primary))' : 'hsl(var(--ink-foreground))'}
-          stroke="hsl(var(--ink))"
+          fill={big ? 'hsl(var(--primary))' : 'hsl(0 0% 100% / 0.9)'}
+          stroke="hsl(230 26% 5%)"
           strokeWidth="2.5"
         />
-        <circle cx="17" cy="16.5" r="5" fill={big ? '#fff' : 'hsl(var(--ink))'} />
+        <circle cx="17" cy="16.5" r="5" fill={big ? '#fff' : 'hsl(230 26% 5%)'} />
       </g>
     ))}
   </svg>
@@ -106,18 +106,19 @@ const Auth = () => {
   return (
     <div className="grid min-h-[100dvh] bg-background lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       {/* Brand panel */}
-      <aside className="relative hidden overflow-hidden bg-ink text-ink-foreground lg:flex lg:flex-col">
-        <div className="bg-map-grid absolute inset-0" />
+      <aside className="relative hidden overflow-hidden border-r border-border bg-[hsl(230_26%_5%)] lg:flex lg:flex-col">
+        <div className="bg-paper-grid absolute inset-0" />
+        <div className="pointer-events-none absolute -left-40 top-1/3 h-[520px] w-[520px] rounded-full bg-primary/25 blur-[140px]" />
         <div className="relative flex h-full flex-col p-10 xl:p-14">
-          <Logo inverted />
+          <Logo />
           <div className="my-auto max-w-md py-10">
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">For employers</p>
             <h1 className="mt-4 text-5xl font-bold leading-[1.02] xl:text-6xl">
-              Hire people who live around the corner.
+              Hire people who live <span className="text-gradient">around the corner.</span>
             </h1>
             <ul className="mt-8 space-y-3">
               {PERKS.map((perk) => (
-                <li key={perk} className="flex items-start gap-3 text-[15px] text-ink-foreground/80">
+                <li key={perk} className="flex items-start gap-3 text-[15px] text-foreground/75">
                   <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
                     <Check className="h-3 w-3" strokeWidth={3} />
                   </span>

@@ -43,8 +43,10 @@ export interface JobSource {
 export type SortOrder = 'nearest' | 'newest';
 
 export interface FilterState {
-  /** Max distance in km from the visitor; 0 means anywhere in the city */
-  distance: number;
+  /** Commute mode used for the reach filter and time estimates */
+  mode: 'walk' | 'bike' | 'car';
+  /** Max commute in minutes from home; 0 means anywhere in the city */
+  maxMinutes: number;
   jobType: JobType | 'all';
   searchQuery: string;
   sort: SortOrder;
