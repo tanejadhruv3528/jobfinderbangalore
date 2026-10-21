@@ -5,6 +5,9 @@
 
 ALTER TABLE IF EXISTS public.jobs RENAME TO legacy_jobs;
 ALTER TABLE IF EXISTS public.employers RENAME TO legacy_employers;
+ALTER INDEX IF EXISTS public.idx_jobs_employer_id RENAME TO idx_legacy_jobs_employer_id;
+ALTER INDEX IF EXISTS public.idx_jobs_location RENAME TO idx_legacy_jobs_location;
+ALTER INDEX IF EXISTS public.jobs_pkey RENAME TO legacy_jobs_pkey;
 ALTER TABLE IF EXISTS public.legacy_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.legacy_employers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.raw_crawl_jobs ENABLE ROW LEVEL SECURITY;
