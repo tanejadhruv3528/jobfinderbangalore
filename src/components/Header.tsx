@@ -1,109 +1,128 @@
-import { MapPin, Briefcase, User, LogOut, Plus } from 'lucide-react';
+import { useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { LogOut, Menu, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Link, useLocation } from 'react-router-dom';
+import Logo from '@/components/brand/Logo';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
+
+const navLinkClass = ({ isActive }: { isActive: boolean }) =>
+  cn(
+    'rounded-full px-3.5 py-2 text-sm font-medium transition-colors',
+    isActive ? 'bg-secondary text-foreground' : 'text-muted-foreground hover:text-foreground',
+  );
 
 const Header = () => {
-  const location = useLocation();
   const { user, signOut } = useAuth();
-  const isEmployerSection = location.pathname.startsWith('/my-jobs') || 
-                            location.pathname.startsWith('/auth') || 
-                            location.pathname.startsWith('/post-a-job');
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const onAuthPage = location.pathname.startsWith('/auth');
+
+  const links = [
+    { to: '/', label: 'Find jobs', end: true },
+    ...(user ? [{ to: '/my-jobs', label: 'My listings', end: false }] : []),
+  ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-glow transition-transform group-hover:scale-105">
-            <MapPin className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold text-foreground">
-            Job<span className="text-primary">Pins</span>
-          </span>
-          <span className="hidden sm:inline-flex ml-2 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide bg-muted text-muted-foreground rounded-full border border-border">
-            Beta
-          </span>
-        </Link>
+    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/85 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-4 px-4 md:px-6">
+        <div className="flex items-center gap-6">
+          <Logo />
+          <nav className="hidden items-center gap-1 md:flex">
+            {links.map((link) => (
+              <NavLink key={link.to} to={link.to} end={link.end} className={navLinkClass}>
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
 
-        <nav className="hidden md:flex items-center gap-6">
-          <Link 
-            to="/" 
-            className={`text-sm font-medium transition-colors hover:text-primary ${
-              location.pathname === '/' ? 'text-primary' : 'text-muted-foreground'
-            }`}
-          >
-            Browse Jobs
-          </Link>
-          {user && (
-            <>
-              <Link 
-                to="/post-a-job" 
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === '/post-a-job' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                Post a Job
-              </Link>
-              <Link 
-                to="/my-jobs" 
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === '/my-jobs' ? 'text-primary' : 'text-muted-foreground'
-                }`}
-              >
-                My Jobs
-              </Link>
-            </>
-          )}
-        </nav>
-
-        <div className="flex items-center gap-3">
+        <div className="hidden items-center gap-2 md:flex">
           {user ? (
             <>
-              <Link to="/post-a-job" className="hidden sm:block">
-                <Button variant="hero" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Post Job
-                </Button>
-              </Link>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={signOut}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
+              <span className="mr-1 max-w-[180px] truncate text-sm text-muted-foreground" title={user.email}>
+                {user.companyName || user.email}
+              </span>
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                <LogOut />
+                Sign out
               </Button>
             </>
           ) : (
-            <>
-              {!isEmployerSection ? (
-                <>
-                  <Link to="/auth">
-                    <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                      <User className="w-4 h-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Employer login</span>
-                    </Button>
-                  </Link>
-                  <Link to="/post-a-job">
-                    <Button variant="hero" size="sm">
-                      <Plus className="w-4 h-4 mr-1 sm:mr-2" />
-                      Post a job
-                    </Button>
-                  </Link>
-                </>
-              ) : (
-                <Link to="/">
-                  <Button variant="hero" size="sm">
-                    <Briefcase className="w-4 h-4 mr-2" />
-                    Browse Jobs
-                  </Button>
-                </Link>
-              )}
-            </>
+            !onAuthPage && (
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/auth">Employer sign in</Link>
+              </Button>
+            )
           )}
+          <Button variant="ink" size="sm" asChild>
+            <Link to="/post-a-job">
+              <Plus />
+              Post a job
+            </Link>
+          </Button>
         </div>
+
+        <button
+          type="button"
+          className="-mr-2 flex h-10 w-10 items-center justify-center rounded-full text-foreground hover:bg-secondary md:hidden"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </button>
       </div>
+
+      {menuOpen && (
+        <div className="animate-fade-up border-t border-border bg-background px-4 pb-5 pt-3 md:hidden">
+          <nav className="flex flex-col gap-1">
+            {links.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                end={link.end}
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) =>
+                  cn('rounded-xl px-3 py-3 text-base font-medium', isActive ? 'bg-secondary' : 'text-foreground/80')
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
+            {!user && (
+              <NavLink
+                to="/auth"
+                onClick={() => setMenuOpen(false)}
+                className="rounded-xl px-3 py-3 text-base font-medium text-foreground/80"
+              >
+                Employer sign in
+              </NavLink>
+            )}
+          </nav>
+          <div className="mt-3 flex flex-col gap-2">
+            <Button variant="ink" size="lg" asChild onClick={() => setMenuOpen(false)}>
+              <Link to="/post-a-job">
+                <Plus />
+                Post a job
+              </Link>
+            </Button>
+            {user && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  setMenuOpen(false);
+                  signOut();
+                }}
+              >
+                <LogOut />
+                Sign out
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 };

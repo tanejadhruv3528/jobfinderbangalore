@@ -2,111 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
-
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Bangalore at night: deep ink canvas, coral pins, warm light text */
+    color-scheme: dark;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --background: 230 22% 7%;
+    --foreground: 40 30% 96%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --card: 230 18% 11%;
+    --card-foreground: 40 30% 96%;
 
-    --primary: 173 80% 40%;
+    --popover: 230 18% 12%;
+    --popover-foreground: 40 30% 96%;
+
+    --primary: 11 92% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 222 47% 11%;
+    /* Inverse surface, used for high-contrast chips and buttons */
+    --ink: 40 30% 96%;
+    --ink-foreground: 230 22% 8%;
 
-    --muted: 210 15% 94%;
-    --muted-foreground: 215 16% 47%;
+    --secondary: 230 14% 16%;
+    --secondary-foreground: 40 30% 96%;
 
-    --accent: 173 60% 95%;
-    --accent-foreground: 173 80% 30%;
+    --muted: 230 14% 15%;
+    --muted-foreground: 230 10% 64%;
 
-    --destructive: 0 84% 60%;
+    --accent: 11 55% 17%;
+    --accent-foreground: 11 95% 74%;
+
+    --destructive: 0 80% 62%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
-    --success-foreground: 0 0% 100%;
+    --success: 152 60% 52%;
+    --success-foreground: 230 22% 8%;
 
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 173 80% 40%;
+    --border: 230 12% 19%;
+    --input: 230 12% 24%;
+    --ring: 11 92% 60%;
 
-    --radius: 0.75rem;
+    --glass: 230 22% 9%;
 
-    /* Custom tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(173 80% 40%), hsl(190 80% 45%));
-    --gradient-hero: linear-gradient(180deg, hsl(210 20% 98%) 0%, hsl(173 60% 97%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(210 20% 99%) 100%);
-    
-    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.08), 0 2px 4px -2px hsl(222 47% 11% / 0.05);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.08), 0 4px 6px -4px hsl(222 47% 11% / 0.05);
-    --shadow-xl: 0 20px 25px -5px hsl(222 47% 11% / 0.1), 0 8px 10px -6px hsl(222 47% 11% / 0.05);
-    --shadow-glow: 0 0 20px hsl(173 80% 40% / 0.3);
+    --radius: 0.875rem;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 173 80% 40%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 173 60% 95%;
-    --sidebar-accent-foreground: 173 80% 30%;
-    --sidebar-border: 214 20% 90%;
-    --sidebar-ring: 173 80% 40%;
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 1px 2px hsl(0 0% 0% / 0.25), 0 6px 16px -4px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 2px 6px hsl(0 0% 0% / 0.3), 0 16px 40px -10px hsl(0 0% 0% / 0.6);
+    --shadow-pop: 0 24px 60px -12px hsl(0 0% 0% / 0.7);
 
-    /* Job type colors */
-    --job-fulltime: 173 80% 40%;
-    --job-parttime: 262 83% 58%;
-    --job-contract: 25 95% 53%;
-    --job-remote: 217 91% 60%;
-    --job-featured: 45 93% 47%;
-  }
-
-  .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 173 80% 45%;
-    --primary-foreground: 222 47% 6%;
-
-    --secondary: 217 33% 15%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 173 40% 15%;
-    --accent-foreground: 173 80% 60%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 173 80% 45%;
-
-    --sidebar-background: 222 47% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 173 80% 45%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 173 40% 15%;
-    --sidebar-accent-foreground: 173 80% 60%;
-    --sidebar-border: 217 33% 17%;
-    --sidebar-ring: 173 80% 45%;
+    /* Job type colours */
+    --job-fulltime: 217 92% 70%;
+    --job-parttime: 262 88% 77%;
+    --job-contract: 32 96% 62%;
+    --job-internship: 152 62% 56%;
+    --job-featured: 42 96% 58%;
   }
 }
 
@@ -115,118 +65,263 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'DM Sans', system-ui, sans-serif;
+  html {
+    -webkit-tap-highlight-color: transparent;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.2);
   }
 }
 
 @layer utilities {
-  .gradient-primary {
-    background: var(--gradient-primary);
-  }
-  
-  .gradient-hero {
-    background: var(--gradient-hero);
-  }
-
-  .gradient-card {
-    background: var(--gradient-card);
-  }
-
   .shadow-soft {
     box-shadow: var(--shadow-md);
   }
 
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
+  .shadow-lift {
+    box-shadow: var(--shadow-lg);
   }
 
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
+  .shadow-pop {
+    box-shadow: var(--shadow-pop);
   }
 
-  .animate-pulse-soft {
-    animation: pulse-soft 2s ease-in-out infinite;
+  .glass {
+    background: hsl(var(--glass) / 0.78);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    backdrop-filter: blur(18px) saturate(1.4);
+    border: 1px solid hsl(0 0% 100% / 0.08);
   }
 
-  .animate-slide-up {
-    animation: slide-up 0.5s ease-out;
+  .text-gradient {
+    background: linear-gradient(100deg, hsl(var(--primary)) 0%, hsl(32 96% 64%) 55%, hsl(var(--job-featured)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
-  .animate-fade-in {
-    animation: fade-in 0.3s ease-out;
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  /* Faint street grid used on brand panels */
+  .bg-map-grid {
+    background-image:
+      linear-gradient(hsl(var(--ink-foreground) / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--ink-foreground) / 0.06) 1px, transparent 1px);
+    background-size: 44px 44px;
+  }
+
+  .bg-paper-grid {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.045) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+/* Map */
+.mapboxgl-map {
+  font-family: inherit;
 }
 
-@keyframes pulse-soft {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+.mapboxgl-ctrl-attrib.mapboxgl-compact {
+  background: hsl(var(--glass) / 0.6) !important;
 }
 
-@keyframes slide-up {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Map styles */
-.mapboxgl-popup-content {
-  padding: 0 !important;
-  border-radius: 0.75rem !important;
-  box-shadow: var(--shadow-xl) !important;
-}
-
-.mapboxgl-popup-close-button {
-  font-size: 1.25rem;
-  padding: 0.5rem;
-  color: hsl(var(--muted-foreground));
-}
-
-.job-marker {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: hsl(var(--primary));
-  border: 3px solid white;
-  box-shadow: var(--shadow-lg);
+/* Job pin. Mapbox owns the wrapper's transform, so state lives on .jp-pin and the drop-in on .jp-pin-inner */
+.jp-pin {
+  position: relative;
+  width: 34px;
+  height: 42px;
   cursor: pointer;
+  transform-origin: 50% 100%;
+  transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 240ms ease, filter 240ms ease;
+  filter: drop-shadow(0 6px 8px hsl(0 0% 0% / 0.45));
+}
+
+.jp-pin-inner {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  animation: jp-drop 620ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--drop-delay, 0ms);
+}
+
+.jp-pin svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.jp-pin .jp-pin-body {
+  fill: hsl(var(--primary));
+  stroke: hsl(0 0% 100% / 0.95);
+  stroke-width: 2.5;
+  transition: fill 200ms ease;
+}
+
+.jp-pin .jp-pin-label {
+  position: absolute;
+  top: 7px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font: 700 12px/18px "Inter", system-ui, sans-serif;
+  color: #fff;
+  pointer-events: none;
+  transition: color 200ms ease;
+}
+
+.jp-pin.is-featured .jp-pin-body {
+  fill: hsl(var(--job-featured));
+}
+
+.jp-pin.is-featured .jp-pin-label {
+  color: hsl(230 22% 8%);
+}
+
+.jp-pin:hover,
+.jp-pin.is-hover {
+  transform: scale(1.18) translateY(-3px);
+}
+
+.jp-pin.is-far {
+  opacity: 0.32;
+  transform: scale(0.82);
+  filter: grayscale(0.6) drop-shadow(0 2px 3px hsl(0 0% 0% / 0.4));
+}
+
+.jp-pin.is-selected {
+  transform: scale(1.35) translateY(-2px);
+  opacity: 1;
+  filter: drop-shadow(0 0 18px hsl(var(--primary) / 0.55)) drop-shadow(0 8px 12px hsl(0 0% 0% / 0.5));
+}
+
+.jp-pin.is-selected .jp-pin-body {
+  fill: #fff;
+  stroke: hsl(var(--primary));
+}
+
+.jp-pin.is-selected .jp-pin-label {
+  color: hsl(230 22% 8%);
+}
+
+.jp-pin-tag {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 4px) scale(0.74);
+  transform-origin: 50% 100%;
+  white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: hsl(0 0% 100%);
+  color: hsl(230 22% 8%);
+  font: 600 12px/1.2 "Inter", system-ui, sans-serif;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 220ms ease;
+}
+
+.jp-pin.is-selected .jp-pin-tag,
+.jp-pin.is-hover .jp-pin-tag {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(0.74);
+}
+
+@keyframes jp-drop {
+  0% { transform: translateY(-60px) scale(0.6); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Draggable "home" marker that anchors the commute radius */
+.jp-home {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.jp-home:active {
+  cursor: grabbing;
+}
+
+.jp-home-core {
+  position: absolute;
+  inset: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  border-radius: 9999px;
+  background: #fff;
+  color: hsl(230 22% 8%);
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.35), 0 8px 20px hsl(0 0% 0% / 0.5);
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.job-marker:hover {
-  transform: scale(1.15);
-  box-shadow: var(--shadow-glow);
+.jp-home:hover .jp-home-core,
+.jp-home.is-dragging .jp-home-core {
+  transform: scale(1.12);
 }
 
-.job-marker.featured {
-  background: linear-gradient(135deg, hsl(45 93% 47%), hsl(25 95% 53%));
+.jp-home::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: hsl(var(--primary) / 0.35);
+  animation: jp-ripple 2.4s ease-out infinite;
 }
 
-.job-marker-count {
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
+.jp-home-label {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: hsl(var(--glass) / 0.85);
+  color: hsl(var(--foreground));
+  font: 600 11px/1.3 "Inter", system-ui, sans-serif;
+  pointer-events: none;
+}
+
+@keyframes jp-ripple {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jp-home::before { animation: none; }
+  .jp-pin, .jp-pin-inner { transition: none; animation: none; }
 }
