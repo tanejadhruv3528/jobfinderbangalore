@@ -10,15 +10,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { createJob } from "@/services/apiJobService";
+import { createJob } from "@/services/jobService";
+import { extractLatLngFromGoogleMaps } from "@/lib/maps";
 import { useAuth } from "@/contexts/AuthContext";
 import { MapPin, CheckCircle, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { JOB_TYPES, JOB_TYPE_LABELS } from "@/lib/jobTypes";
 
 const formSchema = z.object({
   title: z.string().trim().min(1, "Job title is required").max(100, "Job title must be less than 100 characters"),
   description: z.string().trim().min(1, "Job description is required").max(5000, "Job description must be less than 5000 characters"),
-  maps_url: z.string().trim().min(1, "Google Maps link is required"),
-  apply_url: z.string().trim().url("Please enter a valid URL"),
+  maps_url: z
+    .string()
+    .trim()
+    .min(1, "Google Maps link is required")
+    .refine((url) => extractLatLngFromGoogleMaps(url) !== null, {
+      message: "Couldn't find a location in this link. Open the place in Google Maps on a computer and copy the full URL from the address bar.",
+    }),
+  apply_url: z.string().trim().url("Please enter a valid URL").refine((url) => /^https?:\/\//i.test(url), "Link must start with http:// or https://"),
+  area: z.string().trim().max(120, "Keep the area under 120 characters").optional(),
+  job_type: z.enum(["full-time", "part-time", "contract", "internship"]),
+  salary: z.string().trim().max(60, "Keep salary under 60 characters").optional(),
+  experience: z.string().trim().max(60, "Keep experience under 60 characters").optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -35,20 +48,32 @@ const PostAJob = () => {
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
+    watch,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
+    defaultValues: { job_type: "full-time" },
   });
 
   const onSubmit = async (data: FormData) => {
+    const coords = extractLatLngFromGoogleMaps(data.maps_url);
+    if (!user || !coords) return;
+
     setIsSubmitting(true);
 
     try {
       await createJob({
+        employerId: user.id,
+        companyName: user.companyName || user.email,
         title: data.title,
         description: data.description,
-        maps_url: data.maps_url,
-        apply_url: data.apply_url,
-        contact_email: user?.email || '',
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        applyUrl: data.apply_url,
+        area: data.area,
+        jobType: data.job_type,
+        salary: data.salary,
+        experience: data.experience,
       });
 
       setIsSuccess(true);
@@ -118,7 +143,7 @@ const PostAJob = () => {
         <Card className="border-0 shadow-lg">
           <CardHeader className="pb-2">
             <p className="text-sm text-muted-foreground">
-              All fields are required
+              Fields marked optional can be left blank
             </p>
           </CardHeader>
           <CardContent>
@@ -167,6 +192,47 @@ const PostAJob = () => {
                 {errors.maps_url && (
                   <p className="text-sm text-destructive">{errors.maps_url.message}</p>
                 )}
+              </div>
+
+              {/* Area + job type */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="area">Area</Label>
+                  <Input id="area" placeholder="e.g., HSR Layout" {...register("area")} />
+                  {errors.area && <p className="text-sm text-destructive">{errors.area.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="job_type">Job Type</Label>
+                  <Select
+                    value={watch("job_type")}
+                    onValueChange={(value) => setValue("job_type", value as FormData["job_type"])}
+                  >
+                    <SelectTrigger id="job_type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {JOB_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {JOB_TYPE_LABELS[type]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Salary + experience */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="salary">Salary <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                  <Input id="salary" placeholder="e.g., 4-6 LPA" {...register("salary")} />
+                  {errors.salary && <p className="text-sm text-destructive">{errors.salary.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="experience">Experience <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                  <Input id="experience" placeholder="e.g., 1-3 years" {...register("experience")} />
+                  {errors.experience && <p className="text-sm text-destructive">{errors.experience.message}</p>}
+                </div>
               </div>
 
               {/* Apply URL */}

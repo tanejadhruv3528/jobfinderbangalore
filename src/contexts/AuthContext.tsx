@@ -1,67 +1,70 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { authApi, getToken, removeToken } from '@/services/api';
+import { supabase } from '@/integrations/supabase/client';
 
 interface User {
   id: string;
   email: string;
+  companyName: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, companyName?: string) => Promise<{ error: Error | null }>;
-  signOut: () => void;
+  signUp: (email: string, password: string, companyName?: string) => Promise<{ error: Error | null; needsConfirmation?: boolean }>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+type SessionUser = { id: string; email?: string; user_metadata?: Record<string, unknown> };
+
+const toUser = (sessionUser: SessionUser): User => ({
+  id: sessionUser.id,
+  email: sessionUser.email || '',
+  companyName: String(sessionUser.user_metadata?.company_name || ''),
+});
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        // Check token expiry to prevent using stale/expired tokens
-        const isExpired = payload.exp && payload.exp * 1000 < Date.now();
-        if (isExpired) {
-          removeToken();
-        } else {
-          setUser({ id: payload.sub || payload.id, email: payload.email });
-        }
-      } catch {
-        removeToken();
-      }
-    }
-    setLoading(false);
+    // Subscribe first so no auth event between the two calls is missed
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? toUser(session.user) : null);
+      setLoading(false);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ? toUser(session.user) : null);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const data = await authApi.login(email, password);
-      setUser(data.user);
-      return { error: null };
-    } catch (error) {
-      return { error: error instanceof Error ? error : new Error('Sign in failed') };
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    return { error: error ? new Error(error.message) : null };
   };
 
   const signUp = async (email: string, password: string, companyName?: string) => {
-    try {
-      const data = await authApi.register(email, password, companyName);
-      setUser(data.user);
-      return { error: null };
-    } catch (error) {
-      return { error: error instanceof Error ? error : new Error('Sign up failed') };
-    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { company_name: companyName?.trim() || '' },
+        emailRedirectTo: `${window.location.origin}/my-jobs`,
+      },
+    });
+    if (error) return { error: new Error(error.message) };
+    // With email confirmation on, Supabase returns no session until the link is clicked
+    return { error: null, needsConfirmation: !data.session };
   };
 
-  const signOut = () => {
-    authApi.logout();
-    setUser(null);
+  const signOut = async () => {
+    await supabase.auth.signOut();
   };
 
   return (

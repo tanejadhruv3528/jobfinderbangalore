@@ -24,7 +24,7 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const from = (location.state as any)?.from?.pathname || '/my-jobs';
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/my-jobs';
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);
@@ -50,13 +50,19 @@ const Auth = () => {
           navigate('/my-jobs');
         }
       } else {
-        const { error } = await signUp(email, password, companyName);
+        const { error, needsConfirmation } = await signUp(email, password, companyName);
         if (error) {
           toast({
             title: 'Sign up failed',
             description: error.message,
             variant: 'destructive',
           });
+        } else if (needsConfirmation) {
+          toast({
+            title: 'Check your email',
+            description: 'We sent you a link to confirm your account. Click it, then sign in.',
+          });
+          setIsLogin(true);
         } else {
           toast({
             title: 'Account created!',

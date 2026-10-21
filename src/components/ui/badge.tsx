@@ -16,6 +16,7 @@ const badgeVariants = cva(
         parttime: "border-transparent bg-job-parttime/15 text-job-parttime font-medium",
         contract: "border-transparent bg-job-contract/15 text-job-contract font-medium",
         remote: "border-transparent bg-job-remote/15 text-job-remote font-medium",
+        internship: "border-transparent bg-job-remote/15 text-job-remote font-medium",
         featured: "border-transparent bg-job-featured/15 text-job-featured font-semibold",
       },
     },
