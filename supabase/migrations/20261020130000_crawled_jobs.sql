@@ -31,11 +31,9 @@ CREATE INDEX idx_jobs_recheck ON public.jobs(last_checked_at NULLS FIRST)
 
 -- Expired jobs stay in the table for history but drop off the public map.
 -- Employers still see all of their own jobs.
-DROP POLICY "Anyone can view jobs" ON public.jobs;
-
-CREATE POLICY "Anyone can view active jobs"
-  ON public.jobs FOR SELECT TO anon, authenticated
+ALTER POLICY "Anyone can view jobs" ON public.jobs
   USING (status = 'active' OR (SELECT auth.uid()) = employer_id);
+ALTER POLICY "Anyone can view jobs" ON public.jobs RENAME TO "Anyone can view active jobs";
 
 -- Search terms the crawler runs against Google Jobs, oldest first.
 -- Add or disable rows here instead of redeploying.
