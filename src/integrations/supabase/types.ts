@@ -7,6 +7,9 @@ export type Json =
   | Json[]
 
 export type JobType = "full-time" | "part-time" | "contract" | "internship"
+export type JobStatus = "active" | "expired"
+export type JobSource = "employer" | "google_jobs"
+export type LocationPrecision = "exact" | "area" | "company"
 
 export type Database = {
   public: {
@@ -18,7 +21,7 @@ export type Database = {
           company_name: string
           created_at: string
           description: string
-          employer_id: string
+          employer_id: string | null
           experience: string | null
           id: string
           is_featured: boolean
@@ -27,6 +30,14 @@ export type Database = {
           longitude: number
           salary: string | null
           title: string
+          expired_reason: string | null
+          external_id: string | null
+          last_checked_at: string | null
+          last_seen_at: string | null
+          location_precision: LocationPrecision
+          source: JobSource
+          source_via: string | null
+          status: JobStatus
         }
         Insert: {
           apply_url: string
@@ -43,6 +54,14 @@ export type Database = {
           longitude: number
           salary?: string | null
           title: string
+          expired_reason?: string | null
+          external_id?: string | null
+          last_checked_at?: string | null
+          last_seen_at?: string | null
+          location_precision?: LocationPrecision
+          source?: JobSource
+          source_via?: string | null
+          status?: JobStatus
         }
         Update: {
           apply_url?: string
@@ -50,7 +69,7 @@ export type Database = {
           company_name?: string
           created_at?: string
           description?: string
-          employer_id?: string
+          employer_id?: string | null
           experience?: string | null
           id?: string
           is_featured?: boolean
@@ -59,6 +78,14 @@ export type Database = {
           longitude?: number
           salary?: string | null
           title?: string
+          expired_reason?: string | null
+          external_id?: string | null
+          last_checked_at?: string | null
+          last_seen_at?: string | null
+          location_precision?: LocationPrecision
+          source?: JobSource
+          source_via?: string | null
+          status?: JobStatus
         }
         Relationships: []
       }
@@ -88,6 +115,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      job_status: JobStatus
       job_type: JobType
     }
     CompositeTypes: {
