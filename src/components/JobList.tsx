@@ -1,21 +1,22 @@
-import { Briefcase, List, Grid } from 'lucide-react';
+import { Briefcase, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Job } from '@/types';
 import JobCard from './JobCard';
 import JobCardSkeleton from './JobCardSkeleton';
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { calculateDistance, formatDistance } from '@/lib/distance';
+import { useEffect, useRef, useMemo } from 'react';
+import { calculateDistance } from '@/lib/distance';
 
 interface JobListProps {
   jobs: Job[];
   selectedLocationId: string | null;
   onJobSelect: (job: Job) => void;
   isLoading?: boolean;
+  error?: Error | null;
+  onRetry?: () => void;
   userLocation: { lat: number; lng: number } | null;
 }
 
-const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocation }: JobListProps) => {
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, error, onRetry, userLocation }: JobListProps) => {
   const jobRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Calculate distances for each job
@@ -74,7 +75,6 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocatio
           <JobCardSkeleton isCompact />
           <JobCardSkeleton isCompact />
           <JobCardSkeleton isCompact />
-          <JobCardSkeleton isCompact />
         </div>
       </div>
     );
@@ -85,39 +85,40 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocatio
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
         <div className="flex items-center gap-2.5">
           <Briefcase className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-base">{jobs.length} Jobs Found</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant={viewMode === 'list' ? 'secondary' : 'ghost'}
-            size="icon"
-            onClick={() => setViewMode('list')}
-          >
-            <List className="w-4 h-4" />
-          </Button>
-          <Button
-            variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
-            size="icon"
-            onClick={() => setViewMode('grid')}
-          >
-            <Grid className="w-4 h-4" />
-          </Button>
+          <span className="font-semibold text-base">
+            {error ? 'Jobs unavailable' : `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} in Bangalore`}
+          </span>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 py-4">
-        {jobs.length === 0 ? (
+        {error ? (
+          <div className="flex flex-col items-center justify-center h-full text-center py-12">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-5">
+              <AlertCircle className="w-8 h-8 text-destructive" />
+            </div>
+            <h3 className="font-semibold text-lg mb-2">Couldn't load jobs</h3>
+            <p className="text-sm text-muted-foreground max-w-[240px] mb-5">
+              Check your connection and try again.
+            </p>
+            {onRetry && (
+              <Button variant="outline" size="sm" onClick={onRetry}>
+                Try again
+              </Button>
+            )}
+          </div>
+        ) : jobs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-5">
               <Briefcase className="w-8 h-8 text-muted-foreground" />
             </div>
             <h3 className="font-semibold text-lg mb-2">No jobs found</h3>
             <p className="text-sm text-muted-foreground max-w-[200px]">
-              Try adjusting your filters or search query
+              Try a larger distance or clear your search
             </p>
           </div>
         ) : (
-          <div className={`space-y-5 ${viewMode === 'grid' ? 'grid grid-cols-1 gap-5 space-y-0' : ''}`}>
+          <div className="space-y-4">
             {/* Featured jobs first */}
             {featuredJobs.length > 0 && (
               <>
@@ -129,7 +130,6 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocatio
                     key={job.id}
                     ref={setJobRef(job.id)}
                     job={job}
-                    isCompact={viewMode === 'list'}
                     isHighlighted={job.locationId === selectedLocationId}
                     onSelect={onJobSelect}
                     distance={jobDistances.get(job.id)}
@@ -151,7 +151,6 @@ const JobList = ({ jobs, selectedLocationId, onJobSelect, isLoading, userLocatio
                     key={job.id}
                     ref={setJobRef(job.id)}
                     job={job}
-                    isCompact={viewMode === 'list'}
                     isHighlighted={job.locationId === selectedLocationId}
                     onSelect={onJobSelect}
                     distance={jobDistances.get(job.id)}

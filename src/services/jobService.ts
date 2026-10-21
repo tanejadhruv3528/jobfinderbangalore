@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
+import type { Database, JobType } from '@/integrations/supabase/types';
 import { Job } from '@/types';
 
 type JobRow = Database['public']['Tables']['jobs']['Row'];
@@ -65,6 +65,10 @@ export const createJob = async (job: {
   latitude: number;
   longitude: number;
   applyUrl: string;
+  area?: string;
+  jobType: JobType;
+  salary?: string;
+  experience?: string;
 }): Promise<Job> => {
   const { data, error } = await supabase
     .from('jobs')
@@ -76,6 +80,10 @@ export const createJob = async (job: {
       latitude: job.latitude,
       longitude: job.longitude,
       apply_url: job.applyUrl,
+      area: job.area || null,
+      job_type: job.jobType,
+      salary: job.salary || null,
+      experience: job.experience || null,
     })
     .select()
     .single();

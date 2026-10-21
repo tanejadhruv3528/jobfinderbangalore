@@ -42,7 +42,6 @@ export interface JobSource {
 
 export interface FilterState {
   distance: number;
-  role: string;
   jobType: string;
   searchQuery: string;
 }

@@ -8,6 +8,7 @@ import JobList from '@/components/JobList';
 import { FilterState, Job } from '@/types';
 import { fetchJobs } from '@/services/jobService';
 import { useQuery } from '@tanstack/react-query';
+import { BANGALORE_CENTER, calculateDistance, nearBangaloreOrCenter } from '@/lib/distance';
 
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,13 +18,12 @@ const Index = () => {
   const updateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     distance: 50,
-    role: 'All Roles',
     jobType: 'All Types',
     searchQuery: '',
   });
 
   // Fetch jobs from API
-  const { data: apiJobs, isLoading } = useQuery({
+  const { data: apiJobs, isLoading, error, refetch } = useQuery({
     queryKey: ['jobs'],
     queryFn: fetchJobs,
   });
@@ -59,36 +59,31 @@ const Index = () => {
         if (!matchesSearch) return false;
       }
 
-      // Role filter
-      if (filters.role !== 'All Roles' && job.role !== filters.role) {
-        return false;
-      }
-
       // Job type filter
       if (filters.jobType !== 'All Types' && job.jobType !== filters.jobType) {
         return false;
       }
 
+      // Distance filter, measured from the visitor (or the city centre)
+      if (userLocation && job.location) {
+        const km = calculateDistance(userLocation.lat, userLocation.lng, job.location.latitude, job.location.longitude);
+        if (km > filters.distance) return false;
+      }
+
       return true;
     });
-  }, [allJobs, filters]);
+  }, [allJobs, filters, userLocation]);
 
   // Auto-detect user location on mount
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        },
-        () => {
-          // Default to Bangalore if geolocation fails
-          setUserLocation({ lat: 12.9716, lng: 77.5946 });
-        }
-      );
-    }
+    // Start from the city centre; switch to the visitor's position if they are in Bangalore
+    setUserLocation(BANGALORE_CENTER);
+    navigator.geolocation?.getCurrentPosition((position) => {
+      setUserLocation(nearBangaloreOrCenter({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      }));
+    });
   }, []);
 
   // Handle job card click - select its location
@@ -107,12 +102,12 @@ const Index = () => {
       
       <main className="pt-16 h-screen flex flex-col">
         {/* Hero Section */}
-        <div className="bg-primary/5 border-b border-border px-6 py-5 text-center">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">
-            Discover Jobs Near You
+        <div className="border-b border-border px-4 md:px-6 py-3 flex flex-col md:flex-row md:items-baseline gap-x-3">
+          <h1 className="text-lg md:text-xl font-bold text-foreground leading-tight">
+            Jobs near you in Bangalore
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-2 max-w-xl mx-auto">
-            Browse the map to find opportunities, or filter by role and type to narrow your search.
+          <p className="text-sm text-muted-foreground">
+            Tap a pin to see the job, then apply directly with the employer.
           </p>
         </div>
 
@@ -139,7 +134,7 @@ const Index = () => {
           {/* Main content area */}
           <div className="flex-1 flex flex-col lg:flex-row min-h-0">
             {/* Map */}
-            <div className="flex-1 h-[50vh] lg:h-auto relative">
+            <div className="h-[45vh] flex-none lg:h-auto lg:flex-1 relative">
               <JobMap
                 jobs={filteredJobs}
                 selectedLocationId={selectedLocationId}
@@ -157,12 +152,14 @@ const Index = () => {
             </div>
 
             {/* Job list */}
-            <div className="w-full lg:w-96 h-[50vh] lg:h-auto bg-card border-l border-border overflow-hidden">
+            <div className="w-full lg:w-96 flex-1 min-h-0 lg:flex-none lg:h-auto bg-card border-t lg:border-t-0 lg:border-l border-border overflow-hidden">
               <JobList
                 jobs={filteredJobs}
                 selectedLocationId={selectedLocationId}
                 onJobSelect={handleJobSelect}
                 isLoading={isLoading}
+                error={error}
+                onRetry={() => refetch()}
                 userLocation={userLocation}
               />
             </div>

@@ -10,15 +10,11 @@ const JobCardSkeleton = ({ isCompact = false }: JobCardSkeletonProps) => {
     <Card className={`${isCompact ? 'p-3' : ''} animate-pulse`}>
       <CardHeader className={isCompact ? 'p-0 pb-3' : 'pb-4'}>
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
-            {/* Company logo skeleton */}
-            <Skeleton className="w-12 h-12 rounded-lg flex-shrink-0" />
-            <div className="flex-1 min-w-0 space-y-2">
-              {/* Job title skeleton */}
-              <Skeleton className="h-5 w-48 max-w-full" />
-              {/* Company name skeleton */}
-              <Skeleton className="h-4 w-32" />
-            </div>
+          <div className="flex-1 min-w-0 space-y-2">
+            {/* Job title skeleton */}
+            <Skeleton className="h-5 w-48 max-w-full" />
+            {/* Company name skeleton */}
+            <Skeleton className="h-4 w-32 max-w-full" />
           </div>
           {/* Job type badge skeleton */}
           <Skeleton className="h-6 w-20 rounded-full flex-shrink-0" />

@@ -24,7 +24,7 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const from = (location.state as any)?.from?.pathname || '/my-jobs';
+      const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/my-jobs';
       navigate(from, { replace: true });
     }
   }, [user, navigate, location]);

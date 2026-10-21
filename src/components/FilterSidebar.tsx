@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Search, MapPin, Briefcase, Filter, X } from 'lucide-react';
+import { JOB_TYPES, JOB_TYPE_LABELS } from '@/lib/jobTypes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,8 +14,7 @@ interface FilterSidebarProps {
   onClose: () => void;
 }
 
-const roles = ['All Roles', 'Engineering', 'Data Science', 'Consulting', 'Finance', 'Research', 'Design', 'Marketing'];
-const jobTypes = ['All Types', 'full-time', 'part-time', 'contract', 'internship'];
+const jobTypes = ['All Types', ...JOB_TYPES];
 
 const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSidebarProps) => {
   const handleFilterChange = (key: keyof FilterState, value: string | number) => {
@@ -25,7 +24,6 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSide
   const clearFilters = () => {
     onFiltersChange({
       distance: 50,
-      role: 'All Roles',
       jobType: 'All Types',
       searchQuery: '',
     });
@@ -111,32 +109,12 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSide
               </div>
             </div>
 
-            {/* Role */}
+            {/* Job Type */}
             <div className="space-y-3">
               <Label className="text-sm font-medium flex items-center gap-2">
                 <Briefcase className="w-4 h-4 text-primary" />
-                Role
+                Job Type
               </Label>
-              <Select
-                value={filters.role}
-                onValueChange={(value) => handleFilterChange('role', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Job Type */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Job Type</Label>
               <Select
                 value={filters.jobType}
                 onValueChange={(value) => handleFilterChange('jobType', value)}
@@ -147,7 +125,7 @@ const FilterSidebar = ({ filters, onFiltersChange, isOpen, onClose }: FilterSide
                 <SelectContent>
                   {jobTypes.map((type) => (
                     <SelectItem key={type} value={type}>
-                      {type === 'All Types' ? type : type.charAt(0).toUpperCase() + type.slice(1)}
+                      {type === 'All Types' ? type : JOB_TYPE_LABELS[type as keyof typeof JOB_TYPE_LABELS]}
                     </SelectItem>
                   ))}
                 </SelectContent>
