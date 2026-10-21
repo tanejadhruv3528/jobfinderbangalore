@@ -38,8 +38,8 @@ Deno.serve(async (req) => {
 
     for (const q of queries ?? []) {
       stats.queries++;
-      stats.api_calls++;
       const found = await searchGoogleJobs(`${q.query} Bangalore`);
+      stats.api_calls++;
       await db.from('crawl_queries').update({ last_run_at: now }).eq('id', q.id);
       stats.found += found.length;
 
