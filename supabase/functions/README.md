@@ -15,9 +15,9 @@ Every run writes a row to `crawl_runs` with its counts and any error.
 
 Google Jobs usually gives only "Bengaluru, Karnataka", so each job's pin comes from:
 1. an area named in the listing (`_shared/areas.ts`), placed at that area's centre (`location_precision = 'area'`), or
-2. the company's Bangalore office on OpenStreetMap (`location_precision = 'company'`), at most 10 lookups per run.
+2. the company's Bangalore office on Google Maps (`location_precision = 'company'`).
 
-Jobs with neither are skipped and retried the next time the crawler sees them.
+A job with neither is saved with `location_precision = 'city'` and stays hidden from the site. At the end of each crawl, up to `MAPS_LOOKUPS_PER_RUN` waiting companies are looked up on Google Maps (one search each). Results are cached in `company_locations`, so each company costs one lookup ever, and every waiting job of a found company gets pinned.
 
 ## Setup
 
@@ -43,8 +43,8 @@ Apply the migrations in `supabase/migrations` after the Supabase-only migrations
 
 | Secret | Default | Meaning |
 | --- | --- | --- |
-| `CRAWL_QUERIES_PER_RUN` | 7 | Searches per daily run. 7 a day fits a 250 searches/month free plan; raise it on a paid plan. |
-| `GEOCODE_PER_RUN` | 10 | OpenStreetMap lookups per crawl run. |
+| `CRAWL_QUERIES_PER_RUN` | 3 | Job searches per daily run. |
+| `MAPS_LOOKUPS_PER_RUN` | 5 | Google Maps office lookups per daily run. 3 + 5 = 8 a day fits a 250 searches/month free plan; raise both on a paid plan. |
 | `RECHECK_PER_RUN` | 150 | Apply links checked per re-check run. |
 | `STALE_AFTER_DAYS` | 21 | Expire a job not seen on Google for this many days. |
 | `ANALYSIS_MODEL` | `claude-haiku-5-5` | Claude model used for analysis. |
