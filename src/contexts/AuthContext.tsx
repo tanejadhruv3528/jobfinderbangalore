@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -18,6 +19,8 @@ interface AuthContextType {
     companyName?: string,
   ) => Promise<{ error: AuthError | null; needsConfirmation?: boolean; alreadyRegistered?: boolean }>;
   resendConfirmation: (email: string) => Promise<{ error: AuthError | null }>;
+  sendPasswordReset: (email: string) => Promise<{ error: AuthError | null }>;
+  updatePassword: (password: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -32,13 +35,22 @@ const toUser = (sessionUser: SessionUser): User => ({
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate();
+  // useNavigate changes on every route change; the auth listener should only subscribe once
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Subscribe first so no auth event between the two calls is missed
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ? toUser(session.user) : null);
+      // A reset link can land on any page (Supabase falls back to the Site URL),
+      // so send the visitor to the page where they choose the new password
+      if (event === 'PASSWORD_RECOVERY' && window.location.pathname !== '/reset-password') {
+        navigateRef.current('/reset-password', { replace: true });
+      }
       setLoading(false);
     });
 
@@ -81,12 +93,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error };
   };
 
+  const sendPasswordReset = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, resendConfirmation, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, resendConfirmation, sendPasswordReset, updatePassword, signOut }}>
       {children}
     </AuthContext.Provider>
   );

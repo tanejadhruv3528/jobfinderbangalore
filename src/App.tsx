@@ -13,6 +13,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const PostAJob = lazy(() => import("./pages/PostAJob"));
 const MyJobs = lazy(() => import("./pages/MyJobs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route 
                 path="/post-a-job" 
                 element={

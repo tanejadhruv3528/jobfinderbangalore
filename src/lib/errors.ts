@@ -25,6 +25,10 @@ export const friendlyAuthError = (error: unknown): string => {
     return 'Please confirm your email first. Click the link we sent you, or resend it below.';
   if (code === 'user_already_exists' || code === 'email_exists' || text.includes('already registered'))
     return 'An account with this email already exists. Sign in instead.';
+  if (code === 'same_password' || text.includes('different from the old'))
+    return 'Your new password must be different from your old one.';
+  if (code === 'session_not_found' || code === 'otp_expired' || text.includes('auth session missing') || text.includes('expired'))
+    return 'This reset link has expired or was already used. Request a new one.';
   if (code === 'weak_password' || text.includes('password should'))
     return 'That password is too weak. Use a longer one that mixes letters and numbers.';
   if (code === 'email_address_invalid' || text.includes('invalid format') || text.includes('is invalid'))

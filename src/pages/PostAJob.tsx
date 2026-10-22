@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,11 +13,27 @@ import { useToast } from "@/hooks/use-toast";
 import { createJob } from "@/services/jobService";
 import { extractLatLngFromGoogleMaps } from "@/lib/maps";
 import { useAuth } from "@/contexts/AuthContext";
-import { ArrowRight, Check, CircleAlert, Eye, Loader2, MapPin, PartyPopper } from "lucide-react";
+import { ArrowRight, Check, CircleAlert, Crosshair, Eye, Loader2, Map as MapIcon, MapPin, PartyPopper } from "lucide-react";
 import { JOB_TYPES, JOB_TYPE_LABELS } from "@/lib/jobTypes";
 import { Job } from "@/types";
 import { cn } from "@/lib/utils";
 import { friendlyDataError } from "@/lib/errors";
+import { BANGALORE_CENTER, calculateDistance } from "@/lib/distance";
+
+// mapbox-gl only loads if the employer opens the picker
+const LocationPicker = lazy(() => import("@/components/LocationPicker"));
+
+// Bangalore and its outskirts (Hoskote, Electronic City, Devanahalli airport…)
+const MAX_KM_FROM_CENTER = 60;
+
+const toMapsUrl = (latitude: number, longitude: number) =>
+  `https://www.google.com/maps?q=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
+
+const GEO_ERRORS: Record<number, string> = {
+  1: "Location access is blocked. Allow it in your browser settings, or pick the spot on the map.",
+  2: "We couldn't get your location. Try again outdoors, or pick the spot on the map.",
+  3: "Getting your location took too long. Try again, or pick the spot on the map.",
+};
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGFuZWphLWRocnV2IiwiYSI6ImNtdmpjZm14czBjaWEyeXNieXoyNHJ2b2sifQ.8NGZ41t_T45oLpYR4ee0Hg';
 
@@ -28,9 +44,19 @@ const formSchema = z.object({
     .string()
     .trim()
     .min(1, "Google Maps link is required")
+    .refine((url) => !/goo\.gl|maps\.app/i.test(url), {
+      message: "Short share links don't include the location. Use \"Use my current location\" or \"Pick on the map\" below, or copy the full URL from Google Maps on a computer.",
+    })
     .refine((url) => extractLatLngFromGoogleMaps(url) !== null, {
-      message: "Couldn't find a location in this link. Open the place in Google Maps on a computer and copy the full URL from the address bar.",
-    }),
+      message: "Couldn't find a location in this link. Use one of the buttons below, or copy the full URL from the address bar in Google Maps.",
+    })
+    .refine(
+      (url) => {
+        const point = extractLatLngFromGoogleMaps(url);
+        return !point || calculateDistance(point.latitude, point.longitude, BANGALORE_CENTER.lat, BANGALORE_CENTER.lng) <= MAX_KM_FROM_CENTER;
+      },
+      { message: "This location is outside Bangalore. JobPins only lists jobs in and around Bangalore." },
+    ),
   apply_url: z.string().trim().url("Please enter a valid URL").refine((url) => /^https?:\/\//i.test(url), "Link must start with http:// or https://"),
   area: z.string().trim().max(120, "Keep the area under 120 characters").optional(),
   job_type: z.enum(["full-time", "part-time", "contract", "internship"]),
@@ -68,6 +94,9 @@ const Optional = () => <span className="font-normal text-muted-foreground">(opti
 const PostAJob = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [postedTitle, setPostedTitle] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [geoError, setGeoError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -109,6 +138,31 @@ const PostAJob = () => {
       latitude: coords?.latitude ?? 0,
       longitude: coords?.longitude ?? 0,
     },
+  };
+
+  const setLocation = (latitude: number, longitude: number) => {
+    setGeoError(null);
+    setValue("maps_url", toMapsUrl(latitude, longitude), { shouldValidate: true, shouldDirty: true });
+  };
+
+  const locateMe = () => {
+    if (!("geolocation" in navigator)) {
+      setGeoError("Your browser can't share its location. Pick the spot on the map instead.");
+      return;
+    }
+    setLocating(true);
+    setGeoError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocating(false);
+        setLocation(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        setLocating(false);
+        setGeoError(GEO_ERRORS[err.code] ?? GEO_ERRORS[2]);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+    );
   };
 
   const onSubmit = async (data: FormData) => {
@@ -268,10 +322,22 @@ const PostAJob = () => {
                   </p>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    Open your workplace in Google Maps on a computer and copy the full link from the address bar.
+                    Paste a Google Maps link, or use one of the options below.
                   </p>
                 )}
                 <FieldError message={errors.maps_url?.message} />
+                <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+                  <Button type="button" variant="outline" onClick={locateMe} disabled={locating}>
+                    {locating ? <Loader2 className="animate-spin" /> : <Crosshair />}
+                    {locating ? "Finding you…" : "Use my current location"}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => setPickerOpen(true)}>
+                    <MapIcon />
+                    Pick on the map
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">Only use your current location if you're at the workplace right now.</p>
+                <FieldError message={geoError ?? undefined} />
               </div>
 
               <div className="space-y-2">
@@ -385,6 +451,18 @@ const PostAJob = () => {
           </aside>
         </div>
       </main>
+      {pickerOpen && (
+        <Suspense fallback={<div className="fixed inset-0 z-50 bg-background/80" />}>
+          <LocationPicker
+            initial={coords}
+            onClose={() => setPickerOpen(false)}
+            onPick={(p) => {
+              setPickerOpen(false);
+              setLocation(p.latitude, p.longitude);
+            }}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
