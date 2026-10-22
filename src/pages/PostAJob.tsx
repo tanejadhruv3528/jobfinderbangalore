@@ -191,8 +191,8 @@ const PostAJob = () => {
           </p>
         </div>
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+        <div className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
+          <form onSubmit={handleSubmit(onSubmit)} className="min-w-0 space-y-5" noValidate>
             <Section step={1} title="The role" hint="What you're hiring for">
               <div className="space-y-2">
                 <Label htmlFor="title">Job title</Label>

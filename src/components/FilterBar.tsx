@@ -25,6 +25,8 @@ const chip = (active: boolean) =>
 
 /** Search box and job-type chips that float over the map */
 const FilterBar = ({ filters, onChange, className }: FilterBarProps) => {
+  // The full hint gets cut to a few letters next to the logo and Post button on phones
+  const compact = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
   const set = <K extends keyof FilterState>(key: K, value: FilterState[K]) => onChange({ ...filters, [key]: value });
 
   return (
@@ -36,8 +38,8 @@ const FilterBar = ({ filters, onChange, className }: FilterBarProps) => {
           type="search"
           value={filters.searchQuery}
           onChange={(e) => set('searchQuery', e.target.value)}
-          placeholder="Search role, company, skill or area"
-          className="h-12 w-full rounded-full bg-transparent pl-11 pr-11 text-[15px] text-foreground placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/60 [&::-webkit-search-cancel-button]:hidden"
+          placeholder={compact ? "Search" : "Search role, company, skill or area"}
+          className={cn('h-12 w-full rounded-full bg-transparent pl-11 text-base text-foreground placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/60 [&::-webkit-search-cancel-button]:hidden', filters.searchQuery ? 'pr-11' : 'pr-4')}
         />
         {filters.searchQuery && (
           <button
