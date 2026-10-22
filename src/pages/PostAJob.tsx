@@ -18,7 +18,7 @@ import { JOB_TYPES, JOB_TYPE_LABELS } from "@/lib/jobTypes";
 import { Job } from "@/types";
 import { cn } from "@/lib/utils";
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGFuZWphLWRocnV2IiwiYSI6ImNtazFrYmw0NzA1OWUzZHF3NWczYnN0NHcifQ.-ZdRZgv8qdygmFOjPQwY2w';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGFuZWphLWRocnV2IiwiYSI6ImNtdmpjZm14czBjaWEyeXNieXoyNHJ2b2sifQ.8NGZ41t_T45oLpYR4ee0Hg';
 
 const formSchema = z.object({
   title: z.string().trim().min(1, "Job title is required").max(100, "Job title must be less than 100 characters"),
