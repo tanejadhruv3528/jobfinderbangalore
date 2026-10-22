@@ -25,9 +25,9 @@ import { JOB_TYPE_BADGE, JOB_TYPE_LABELS } from '@/lib/jobTypes';
 import { formatDate, postedAgo } from '@/lib/format';
 
 const Stat = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-    <p className="text-sm text-muted-foreground">{label}</p>
-    <p className="mt-1 font-display text-2xl font-bold sm:text-3xl">{value}</p>
+  <div className="min-w-0 rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-5">
+    <p className="text-xs text-muted-foreground sm:text-sm">{label}</p>
+    <p className="mt-1 truncate font-display text-xl font-bold sm:text-3xl">{value}</p>
   </div>
 );
 
@@ -112,7 +112,7 @@ const MyJobs = () => {
           </Button>
         </div>
 
-        <div className="mt-8 grid grid-cols-3 gap-3">
+        <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-3">
           <Stat label="Live jobs" value={isLoading ? '–' : jobs.length} />
           <Stat label="Featured" value={isLoading ? '–' : jobs.filter((j) => j.isFeatured).length} />
           <Stat label="Last posted" value={isLoading ? '–' : jobs[0] ? postedAgo(jobs[0].createdAt) : 'Never'} />
@@ -175,7 +175,7 @@ const MyJobs = () => {
                   </div>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-2 sm:justify-end">
+                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
                   <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild>
                     <Link to={`/?job=${job.id}`}>
                       View on map

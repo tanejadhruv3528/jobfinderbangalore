@@ -76,7 +76,8 @@ Deno.serve(async (req) => {
       for (const [i, id] of fresh.entries()) {
         const job = byId.get(id)!;
         const a = results[i];
-        if (!a.keep) {
+        // jobs.apply_url must be http(s); one bad row would fail the whole batch insert
+        if (!a.keep || !/^https?:\/\//i.test(job.applyUrl)) {
           stats.rejected++;
           continue;
         }

@@ -48,13 +48,19 @@ const ExploreActions = () => {
     <div className="flex items-center gap-2">
       {user ? (
         <>
+          <Button variant="ghost" size="icon" className="glass h-9 w-9 hover:bg-white/10 lg:hidden" asChild>
+            <Link to="/my-jobs" aria-label="My listings">
+              <LayoutDashboard />
+            </Link>
+          </Button>
           <Button variant="ghost" size="sm" className="glass hidden hover:bg-white/10 lg:inline-flex" asChild>
             <Link to="/my-jobs">
               <LayoutDashboard />
               My listings
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" className="glass h-9 w-9 hover:bg-white/10" onClick={signOut} aria-label="Sign out">
+          {/* Phones have room for one icon here; sign out is in the My listings header */}
+          <Button variant="ghost" size="icon" className="glass hidden h-9 w-9 hover:bg-white/10 lg:inline-flex" onClick={signOut} aria-label="Sign out">
             <LogOut />
           </Button>
         </>
@@ -67,7 +73,7 @@ const ExploreActions = () => {
         <Link to="/post-a-job">
           <Plus />
           <span className="hidden sm:inline">Post a job</span>
-          <span className="sm:hidden">Post</span>
+          <span className="max-[359px]:sr-only sm:hidden">Post</span>
         </Link>
       </Button>
     </div>
