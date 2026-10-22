@@ -68,8 +68,6 @@ END;
 $$;
 
 -- Daily at 03:15 IST
-SELECT cron.unschedule('refresh-disposable-email-domains')
-WHERE EXISTS (SELECT 1 FROM cron.job WHERE jobname = 'refresh-disposable-email-domains');
 SELECT cron.schedule('refresh-disposable-email-domains', '45 21 * * *', 'SELECT private.refresh_disposable_domains()');
 
 -- One canonical form per mailbox: lower case, no +tag, and for Gmail no dots
@@ -106,8 +104,9 @@ AS $$
   )
   SELECT EXISTS (
     SELECT 1
-    FROM labels, generate_series(1, greatest(array_length(a, 1) - 1, 0)) AS i
-    JOIN private.disposable_email_domains d ON d.domain = array_to_string(a[i:], '.')
+    FROM labels l
+    JOIN LATERAL generate_series(1, greatest(array_length(l.a, 1) - 1, 0)) AS i ON true
+    JOIN private.disposable_email_domains d ON d.domain = array_to_string(l.a[i:], '.')
   );
 $$;
 
@@ -119,7 +118,8 @@ SET search_path = ''
 AS $$
   SELECT EXISTS (
     SELECT 1 FROM auth.users u
-    WHERE private.canonical_email(u.email) = private.canonical_email(email)
+    -- Qualified: inside this query a bare "email" would mean auth.users.email
+    WHERE private.canonical_email(u.email) = private.canonical_email(email_taken.email)
   );
 $$;
 
@@ -169,7 +169,6 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS block_unwanted_signups ON auth.users;
 CREATE TRIGGER block_unwanted_signups
   BEFORE INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION private.block_unwanted_signups();
