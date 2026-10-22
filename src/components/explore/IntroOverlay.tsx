@@ -54,7 +54,9 @@ const IntroOverlay = ({ jobCount, areaCount, isLoading, onExplore, onUseLocation
   return (
     <motion.div
       className="absolute inset-0 z-40 flex flex-col"
-      initial={{ opacity: 0 }}
+      // No fade-in: text that starts invisible counts as not painted, which delays
+      // the page's Largest Contentful Paint until the animation ends
+      initial={false}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.6, ease: [0.4, 0, 0.2, 1] } }}
     >
@@ -79,8 +81,8 @@ const IntroOverlay = ({ jobCount, areaCount, isLoading, onExplore, onUseLocation
 
       <div className="relative mt-auto px-5 pb-10 md:px-10 md:pb-16">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ y: 30 }}
+          animate={{ y: 0 }}
           exit={{ opacity: 0, y: -40, transition: { duration: 0.5 } }}
           transition={{ duration: 0.9, delay: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
           className="max-w-4xl"

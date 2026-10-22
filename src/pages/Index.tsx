@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -6,7 +6,7 @@ import { LayoutDashboard, LogOut, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/brand/Logo';
 import FilterBar, { DEFAULT_FILTERS } from '@/components/FilterBar';
-import JobMap, { JobMapHandle } from '@/components/JobMap';
+import type { JobMapHandle } from '@/components/JobMap';
 import JobList, { AreaCount } from '@/components/JobList';
 import JobDetail from '@/components/JobDetail';
 import CommuteCard from '@/components/explore/CommuteCard';
@@ -19,6 +19,9 @@ import { BANGALORE_CENTER, calculateDistance, nearBangaloreOrCenter } from '@/li
 import { commuteMinutes, reachKm } from '@/lib/commute';
 import { useIsDesktop } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
+
+// mapbox-gl is most of the JavaScript, so the map loads in its own chunk while the intro paints
+const JobMap = lazy(() => import('@/components/JobMap'));
 
 type LatLng = { lat: number; lng: number };
 
@@ -91,6 +94,18 @@ const Index = () => {
   const [activeJobId, setActiveJobId] = useState<string | null>(openJobId);
   const [hoveredJobId, setHoveredJobId] = useState<string | null>(null);
   const [sheetSnap, setSheetSnap] = useState<SheetSnap>('half');
+  // Start the map only once the intro has painted, so its parsing doesn't hold up the first screen
+  const [showMap, setShowMap] = useState(false);
+
+  useEffect(() => {
+    const start = () => setShowMap(true);
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(start, { timeout: 1500 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = setTimeout(start, 300);
+    return () => clearTimeout(id);
+  }, []);
 
   const { data: allJobs = [], isLoading, error, refetch } = useQuery({ queryKey: ['jobs'], queryFn: fetchJobs });
 
@@ -263,22 +278,24 @@ const Index = () => {
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-background">
       <div className="absolute inset-0">
-        <JobMap
-          ref={mapRef}
-          jobs={allJobs}
-          matchIds={matchIds}
-          reachIds={reachIds}
-          selectedJobId={activeJobId}
-          hoveredJobId={hoveredJobId}
-          onJobSelect={handlePinSelect}
-          onJobHover={setHoveredJobId}
-          home={home}
-          onHomeChange={setHome}
-          radiusKm={intro ? 0 : radiusKm}
-          intro={intro}
-          padding={isDesktop ? { left: PANEL_WIDTH + 16, top: 80 } : { top: 130, bottom: window.innerHeight * 0.5 }}
-          controlsClassName={isDesktop ? 'bottom-10 right-4' : 'right-3 top-[132px]'}
-        />
+        <Suspense fallback={null}>
+          {showMap && <JobMap
+            ref={mapRef}
+            jobs={allJobs}
+            matchIds={matchIds}
+            reachIds={reachIds}
+            selectedJobId={activeJobId}
+            hoveredJobId={hoveredJobId}
+            onJobSelect={handlePinSelect}
+            onJobHover={setHoveredJobId}
+            home={home}
+            onHomeChange={setHome}
+            radiusKm={intro ? 0 : radiusKm}
+            intro={intro}
+            padding={isDesktop ? { left: PANEL_WIDTH + 16, top: 80 } : { top: 130, bottom: window.innerHeight * 0.5 }}
+            controlsClassName={isDesktop ? 'bottom-10 right-4' : 'right-3 top-[132px]'}
+          />}
+        </Suspense>
       </div>
 
       <AnimatePresence>

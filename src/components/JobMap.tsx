@@ -168,7 +168,9 @@ const JobMap = forwardRef<JobMapHandle, JobMapProps>(
         m.easeTo({ ...EXPLORE_CAMERA, center: [home.lng, home.lat], padding: cameraPadding(), duration: 2200, essential: true });
         return;
       }
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      // Re-rendering the 3D city every frame ties up a phone's main thread for seconds,
+      // so the orbit only runs on computers with a mouse
+      if (window.matchMedia('(prefers-reduced-motion: reduce), (pointer: coarse)').matches) return;
 
       let frame = 0;
       let stopped = false;

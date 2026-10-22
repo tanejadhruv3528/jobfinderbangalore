@@ -18,8 +18,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Bricolage Grotesque", "Inter", "system-ui", "sans-serif"],
+        sans: ["Inter Variable", "Inter", "system-ui", "sans-serif"],
+        display: ["Bricolage Grotesque Variable", "Bricolage Grotesque", "Inter Variable", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
