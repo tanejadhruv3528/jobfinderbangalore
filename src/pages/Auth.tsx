@@ -72,6 +72,8 @@ const BrandMap = () => (
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  // "Forgot password" is a third state of the sign-in tab; ?mode=forgot opens it from the expired-link page
+  const [forgot, setForgot] = useState(() => new URLSearchParams(window.location.search).get('mode') === 'forgot');
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,7 +82,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { user, signIn, signUp, resendConfirmation } = useAuth();
+  const { user, signIn, signUp, resendConfirmation, sendPasswordReset } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -95,6 +97,7 @@ const Auth = () => {
 
   const switchMode = (login: boolean) => {
     setIsLogin(login);
+    setForgot(false);
     setProblem(null);
     setNotice(null);
   };
@@ -106,6 +109,7 @@ const Auth = () => {
     if (!isLogin && companyName.trim().length > 100) return { field: 'companyName', message: 'Keep the company name under 100 characters.' };
     if (!trimmed) return { field: 'email', message: 'Enter your email address.' };
     if (!EMAIL_PATTERN.test(trimmed)) return { field: 'email', message: "That doesn't look like a valid email address. Check for typos." };
+    if (forgot) return null;
     if (!password) return { field: 'password', message: 'Enter your password.' };
     if (!isLogin && password.length < 6) return { field: 'password', message: 'Use at least 6 characters for your password.' };
     if (!isLogin && password.length > 72) return { field: 'password', message: 'Keep your password under 72 characters.' };
@@ -123,6 +127,17 @@ const Auth = () => {
 
     setIsLoading(true);
     try {
+      if (forgot) {
+        const { error } = await sendPasswordReset(email);
+        if (error) {
+          setProblem({ message: friendlyAuthError(error) });
+        } else {
+          // Same answer whether or not the account exists, so the form can't be used to probe emails
+          setNotice(`If an account exists for ${email.trim()}, we've sent a link to reset your password. It can take a minute to arrive, so check spam too.`);
+        }
+        return;
+      }
+
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
@@ -220,12 +235,16 @@ const Auth = () => {
         </div>
 
         <div className="mx-auto my-auto w-full max-w-[400px] py-10">
-          <h2 className="text-4xl font-bold leading-tight">{isLogin ? 'Welcome back' : 'Start hiring nearby'}</h2>
+          <h2 className="text-4xl font-bold leading-tight">{forgot ? 'Reset your password' : isLogin ? 'Welcome back' : 'Start hiring nearby'}</h2>
           <p className="mt-2 text-muted-foreground">
-            {isLogin ? 'Sign in to manage your job listings.' : 'Create a free employer account in under a minute.'}
+            {forgot
+              ? "Enter your account email and we'll send you a link to choose a new password."
+              : isLogin
+                ? 'Sign in to manage your job listings.'
+                : 'Create a free employer account in under a minute.'}
           </p>
 
-          <div className="mt-8 grid grid-cols-2 rounded-full bg-secondary p-1" role="tablist">
+          {!forgot && <div className="mt-8 grid grid-cols-2 rounded-full bg-secondary p-1" role="tablist">
             {[
               ['Sign in', true],
               ['Create account', false],
@@ -244,10 +263,10 @@ const Auth = () => {
                 {label}
               </button>
             ))}
-          </div>
+          </div>}
 
-          <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
-            {!isLogin && (
+          <form onSubmit={handleSubmit} noValidate className={cn('space-y-4', forgot ? 'mt-8' : 'mt-6')}>
+            {!isLogin && !forgot && (
               <div className="animate-fade-up space-y-2">
                 <Label htmlFor="companyName">Company name</Label>
                 <div className="relative">
@@ -294,8 +313,19 @@ const Auth = () => {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            {!forgot && <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={() => { setForgot(true); setProblem(null); setNotice(null); }}
+                    className="text-sm font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -320,7 +350,7 @@ const Auth = () => {
                 </button>
               </div>
               <FieldError id="password-error" message={fieldProblem('password')} />
-            </div>
+            </div>}
 
             {problem && !problem.field && (
               <div role="alert" className="flex items-start gap-2.5 rounded-2xl border border-destructive/40 bg-destructive/10 p-3.5 text-sm">
@@ -348,11 +378,17 @@ const Auth = () => {
                 <Loader2 className="animate-spin" />
               ) : (
                 <>
-                  {isLogin ? 'Sign in' : 'Create account'}
+                  {forgot ? 'Send reset link' : isLogin ? 'Sign in' : 'Create account'}
                   <ArrowRight />
                 </>
               )}
             </Button>
+
+            {forgot && (
+              <button type="button" onClick={() => switchMode(true)} className="w-full text-center text-sm font-semibold text-foreground underline-offset-4 hover:underline">
+                Back to sign in
+              </button>
+            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
