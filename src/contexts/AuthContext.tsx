@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import type { AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface User {
@@ -10,8 +11,13 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, companyName?: string) => Promise<{ error: Error | null; needsConfirmation?: boolean }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    companyName?: string,
+  ) => Promise<{ error: AuthError | null; needsConfirmation?: boolean; alreadyRegistered?: boolean }>;
+  resendConfirmation: (email: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -45,22 +51,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error ? new Error(error.message) : null };
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    return { error };
   };
 
   const signUp = async (email: string, password: string, companyName?: string) => {
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: email.trim(),
       password,
       options: {
         data: { company_name: companyName?.trim() || '' },
         emailRedirectTo: `${window.location.origin}/my-jobs`,
       },
     });
-    if (error) return { error: new Error(error.message) };
+    if (error) return { error };
+    // For an email that already has a confirmed account, Supabase answers with a
+    // placeholder user that has no identities instead of an error
+    if (data.user && data.user.identities?.length === 0) return { error: null, alreadyRegistered: true };
     // With email confirmation on, Supabase returns no session until the link is clicked
     return { error: null, needsConfirmation: !data.session };
+  };
+
+  const resendConfirmation = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email.trim(),
+      options: { emailRedirectTo: `${window.location.origin}/my-jobs` },
+    });
+    return { error };
   };
 
   const signOut = async () => {
@@ -68,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, resendConfirmation, signOut }}>
       {children}
     </AuthContext.Provider>
   );

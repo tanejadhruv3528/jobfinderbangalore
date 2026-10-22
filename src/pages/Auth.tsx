@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, Building2, Check, Eye, EyeOff, Loader2, Lock, Mail } from 'lucide-react';
+import { ArrowRight, Building2, Check, CircleAlert, Eye, EyeOff, Loader2, Lock, Mail, MailCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,12 +8,32 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import Logo from '@/components/brand/Logo';
 import { cn } from '@/lib/utils';
+import { friendlyAuthError } from '@/lib/errors';
+import { supabase } from '@/integrations/supabase/client';
+
+const EMAIL_PATTERN = /^[^@\s]+@[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i;
+
+type Problem = { field?: 'email' | 'password' | 'companyName'; message: string; canResend?: boolean; canSignIn?: boolean };
+
+/** Asks the database whether this email can sign up; null when the check itself fails. */
+const checkSignupEmail = async (email: string) => {
+  const { data, error } = await supabase.rpc('check_signup_email', { email });
+  return error ? null : data;
+};
 
 const PERKS = [
   'Free to post, live on the map in seconds',
   'Reach people who live and commute near you',
   'Candidates apply straight to your own link',
 ];
+
+const FieldError = ({ id, message }: { id: string; message?: string }) =>
+  message ? (
+    <p id={id} role="alert" className="flex items-start gap-1.5 text-sm text-destructive">
+      <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+      {message}
+    </p>
+  ) : null;
 
 /** Decorative map with a few pins, drawn for the brand panel. */
 const BrandMap = () => (
@@ -60,7 +80,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, resendConfirmation } = useAuth();
 
   // Redirect if already logged in
   useEffect(() => {
@@ -70,38 +90,98 @@ const Auth = () => {
     }
   }, [user, navigate, location]);
 
+  const [problem, setProblem] = useState<Problem | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const switchMode = (login: boolean) => {
+    setIsLogin(login);
+    setProblem(null);
+    setNotice(null);
+  };
+
+  // Catch the common mistakes before anything is sent
+  const validate = (): Problem | null => {
+    const trimmed = email.trim();
+    if (!isLogin && companyName.trim().length < 2) return { field: 'companyName', message: 'Enter your company name.' };
+    if (!isLogin && companyName.trim().length > 100) return { field: 'companyName', message: 'Keep the company name under 100 characters.' };
+    if (!trimmed) return { field: 'email', message: 'Enter your email address.' };
+    if (!EMAIL_PATTERN.test(trimmed)) return { field: 'email', message: "That doesn't look like a valid email address. Check for typos." };
+    if (!password) return { field: 'password', message: 'Enter your password.' };
+    if (!isLogin && password.length < 6) return { field: 'password', message: 'Use at least 6 characters for your password.' };
+    if (!isLogin && password.length > 72) return { field: 'password', message: 'Keep your password under 72 characters.' };
+    if (!isLogin && password.trim().toLowerCase() === trimmed.toLowerCase())
+      return { field: 'password', message: "Your password can't be the same as your email." };
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setNotice(null);
+    const invalid = validate();
+    setProblem(invalid);
+    if (invalid) return;
 
+    setIsLoading(true);
     try {
       if (isLogin) {
         const { error } = await signIn(email, password);
         if (error) {
-          toast({ title: 'Sign in failed', description: error.message, variant: 'destructive' });
+          const notConfirmed = error.code === 'email_not_confirmed' || /not confirmed/i.test(error.message);
+          setProblem({ message: friendlyAuthError(error), canResend: notConfirmed });
         } else {
-          toast({ title: 'Welcome back!', description: 'You have successfully logged in.' });
+          toast({ title: 'Welcome back!', description: 'You are signed in.' });
         }
+        return;
+      }
+
+      // Friendly answers for temporary emails and existing accounts. The database
+      // enforces the same rules, so a failed check doesn't block a real sign-up.
+      const verdict = await checkSignupEmail(email.trim());
+      if (verdict === 'invalid') {
+        setProblem({ field: 'email', message: "That doesn't look like a valid email address. Check for typos." });
+        return;
+      }
+      if (verdict === 'disposable') {
+        setProblem({ field: 'email', message: "Temporary email addresses aren't allowed. Please use your work or personal email." });
+        return;
+      }
+      if (verdict === 'taken') {
+        setProblem({ field: 'email', message: 'An account with this email already exists.', canSignIn: true });
+        return;
+      }
+
+      const { error, needsConfirmation, alreadyRegistered } = await signUp(email, password, companyName);
+      if (error) {
+        setProblem({ message: friendlyAuthError(error) });
+      } else if (alreadyRegistered) {
+        setProblem({ field: 'email', message: 'An account with this email already exists.', canSignIn: true });
+      } else if (needsConfirmation) {
+        switchMode(true);
+        setNotice(`We sent a confirmation link to ${email.trim()}. Click it, then sign in here.`);
       } else {
-        const { error, needsConfirmation } = await signUp(email, password, companyName);
-        if (error) {
-          toast({ title: 'Sign up failed', description: error.message, variant: 'destructive' });
-        } else if (needsConfirmation) {
-          toast({
-            title: 'Check your email',
-            description: 'We sent you a link to confirm your account. Click it, then sign in.',
-          });
-          setIsLogin(true);
-        } else {
-          toast({ title: 'Account created!', description: 'Your employer account has been created.' });
-        }
+        toast({ title: 'Account created!', description: 'Your employer account is ready.' });
       }
     } catch (error) {
-      toast({ title: 'Error', description: 'Something went wrong. Please try again.', variant: 'destructive' });
+      console.error('Auth error:', error);
+      setProblem({ message: friendlyAuthError(error) });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleResend = async () => {
+    setIsLoading(true);
+    const { error } = await resendConfirmation(email);
+    setIsLoading(false);
+    if (error) {
+      setProblem({ message: friendlyAuthError(error), canResend: true });
+    } else {
+      setProblem(null);
+      setNotice(`We sent a new confirmation link to ${email.trim()}. It can take a minute to arrive, so check spam too.`);
+    }
+  };
+
+  const fieldProblem = (field: Problem['field']) => (problem?.field === field ? problem.message : undefined);
 
   return (
     <div className="grid min-h-[100dvh] bg-background lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
@@ -155,7 +235,7 @@ const Auth = () => {
                 type="button"
                 role="tab"
                 aria-selected={isLogin === login}
-                onClick={() => setIsLogin(login as boolean)}
+                onClick={() => switchMode(login as boolean)}
                 className={cn(
                   'h-10 rounded-full text-sm font-semibold transition-all',
                   isLogin === login ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
@@ -166,7 +246,7 @@ const Auth = () => {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="mt-6 space-y-4">
             {!isLogin && (
               <div className="animate-fade-up space-y-2">
                 <Label htmlFor="companyName">Company name</Label>
@@ -174,14 +254,17 @@ const Auth = () => {
                   <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="companyName"
+                  aria-invalid={!!fieldProblem('companyName')}
+                  aria-describedby={fieldProblem('companyName') ? 'companyName-error' : undefined}
                     placeholder="Acme Pvt Ltd"
                     value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    onChange={(e) => { setCompanyName(e.target.value); setProblem(null); }}
                     className="pl-10"
                     autoComplete="organization"
-                    required
+                    maxLength={100}
                   />
                 </div>
+                <FieldError id="companyName-error" message={fieldProblem('companyName')} />
               </div>
             )}
 
@@ -191,15 +274,24 @@ const Auth = () => {
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="email"
+                  aria-invalid={!!fieldProblem('email')}
+                  aria-describedby={fieldProblem('email') ? 'email-error' : undefined}
                   type="email"
                   placeholder="you@company.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setProblem(null); }}
                   className="pl-10"
                   autoComplete="email"
-                  required
+                  inputMode="email"
+                  maxLength={254}
                 />
               </div>
+              <FieldError id="email-error" message={fieldProblem('email')} />
+              {problem?.field === 'email' && problem.canSignIn && (
+                <button type="button" onClick={() => switchMode(true)} className="text-sm font-semibold text-primary underline-offset-4 hover:underline">
+                  Sign in instead
+                </button>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -208,14 +300,15 @@ const Auth = () => {
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="password"
+                  aria-invalid={!!fieldProblem('password')}
+                  aria-describedby={fieldProblem('password') ? 'password-error' : undefined}
                   type={showPassword ? 'text' : 'password'}
                   placeholder={isLogin ? 'Your password' : 'At least 6 characters'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setProblem(null); }}
                   className="pl-10 pr-11"
                   autoComplete={isLogin ? 'current-password' : 'new-password'}
-                  required
-                  minLength={6}
+                  maxLength={72}
                 />
                 <button
                   type="button"
@@ -226,7 +319,29 @@ const Auth = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <FieldError id="password-error" message={fieldProblem('password')} />
             </div>
+
+            {problem && !problem.field && (
+              <div role="alert" className="flex items-start gap-2.5 rounded-2xl border border-destructive/40 bg-destructive/10 p-3.5 text-sm">
+                <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <div>
+                  <p>{problem.message}</p>
+                  {problem.canResend && (
+                    <button type="button" onClick={handleResend} disabled={isLoading} className="mt-1.5 font-semibold text-primary underline-offset-4 hover:underline">
+                      Resend confirmation email
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {notice && (
+              <div role="status" className="flex items-start gap-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-sm">
+                <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                <p>{notice}</p>
+              </div>
+            )}
 
             <Button type="submit" size="lg" className="mt-2 w-full" disabled={isLoading}>
               {isLoading ? (

@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { Compass, Loader2, LocateFixed, Minus, Plus } from 'lucide-react';
+import { Compass, Loader2, LocateFixed, MapPinOff, Minus, Plus } from 'lucide-react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Job } from '@/types';
@@ -83,6 +83,7 @@ const JobMap = forwardRef<JobMapHandle, JobMapProps>(
     const callbacks = useRef({ onJobSelect, onJobHover, onHomeChange });
     const paddingRef = useRef(padding);
     const [loaded, setLoaded] = useState(false);
+    const [failed, setFailed] = useState(false);
     const [isLocating, setIsLocating] = useState(false);
 
     callbacks.current = { onJobSelect, onJobHover, onHomeChange };
@@ -145,6 +146,13 @@ const JobMap = forwardRef<JobMapHandle, JobMapProps>(
           layout: { visibility: 'none' },
         } as mapboxgl.LayerSpecification);
         setLoaded(true);
+      });
+
+      // A style that never arrives (bad token, offline, blocked) would otherwise leave a blank panel.
+      // Tile errors after the style has loaded are left to Mapbox's own retries.
+      m.on('error', (e) => {
+        console.error('Map error:', e.error);
+        if (!m.isStyleLoaded()) setFailed(true);
       });
 
       m.on('click', (e) => {
@@ -331,6 +339,19 @@ const JobMap = forwardRef<JobMapHandle, JobMapProps>(
         {/* mapbox-gl.css sets .mapboxgl-map to position: relative, and since the map loads in its own chunk that rule
             now lands after Tailwind's, so absolute has to be forced or the map collapses to zero height */}
         <div ref={container} className="!absolute inset-0" />
+
+        {failed && !loaded && !intro && (
+          <div role="alert" className="absolute inset-0 z-20 flex items-center justify-center p-6">
+            <div className="glass max-w-sm rounded-3xl p-6 text-center shadow-lift">
+              <MapPinOff className="mx-auto h-8 w-8 text-primary" />
+              <p className="mt-3 font-display text-lg font-bold">The map couldn't load</p>
+              <p className="mt-1 text-sm text-muted-foreground">Check your internet connection, then refresh. You can still browse every job in the list.</p>
+              <button type="button" onClick={() => window.location.reload()} className="mt-4 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">
+                Refresh
+              </button>
+            </div>
+          </div>
+        )}
 
         <div
           className={cn(

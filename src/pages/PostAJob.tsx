@@ -17,6 +17,7 @@ import { ArrowRight, Check, CircleAlert, Eye, Loader2, MapPin, PartyPopper } fro
 import { JOB_TYPES, JOB_TYPE_LABELS } from "@/lib/jobTypes";
 import { Job } from "@/types";
 import { cn } from "@/lib/utils";
+import { friendlyDataError } from "@/lib/errors";
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGFuZWphLWRocnV2IiwiYSI6ImNtdmpjZm14czBjaWEyeXNieXoyNHJ2b2sifQ.8NGZ41t_T45oLpYR4ee0Hg';
 
@@ -137,8 +138,8 @@ const PostAJob = () => {
     } catch (error) {
       console.error('Error posting job:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to post job. Please try again.",
+        title: "Couldn't post your job",
+        description: friendlyDataError(error, "post"),
         variant: "destructive",
       });
     } finally {

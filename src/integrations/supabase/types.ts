@@ -112,7 +112,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_signup_email: {
+        Args: { email: string }
+        Returns: string
+      }
     }
     Enums: {
       job_status: JobStatus

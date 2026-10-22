@@ -42,7 +42,7 @@ export const fetchJobs = async (): Promise<Job[]> => {
     .eq('status', 'active')
     .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
+  if (error) throw error;
   return data.map(transformJob);
 };
 
@@ -53,7 +53,7 @@ export const fetchMyJobs = async (employerId: string): Promise<Job[]> => {
     .eq('employer_id', employerId)
     .order('created_at', { ascending: false });
 
-  if (error) throw new Error(error.message);
+  if (error) throw error;
   return data.map(transformJob);
 };
 
@@ -88,7 +88,7 @@ export const createJob = async (job: {
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) throw error;
   return transformJob(data);
 };
 
@@ -98,6 +98,6 @@ export const deleteJob = async (jobId: string): Promise<void> => {
     .delete({ count: 'exact' })
     .eq('id', jobId);
 
-  if (error) throw new Error(error.message);
+  if (error) throw error;
   if (count === 0) throw new Error('Job not found or not yours to delete');
 };
