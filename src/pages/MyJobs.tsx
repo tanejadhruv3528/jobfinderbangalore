@@ -16,6 +16,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { friendlyDataError } from '@/lib/errors';
 import { fetchMyJobs, deleteJob } from '@/services/jobService';
 import { useAuth } from '@/contexts/AuthContext';
 import { Job } from '@/types';
@@ -60,8 +61,8 @@ const MyJobs = () => {
       } catch (error) {
         console.error('Error fetching jobs:', error);
         toast({
-          title: 'Error',
-          description: error instanceof Error ? error.message : 'Failed to fetch jobs. Please try again.',
+          title: "Couldn't load your listings",
+          description: friendlyDataError(error, 'load'),
           variant: 'destructive',
         });
       } finally {
@@ -82,8 +83,8 @@ const MyJobs = () => {
     } catch (error) {
       console.error('Error deleting job:', error);
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to delete job. Please try again.',
+        title: "Couldn't delete this job",
+        description: friendlyDataError(error, 'delete'),
         variant: 'destructive',
       });
     } finally {
