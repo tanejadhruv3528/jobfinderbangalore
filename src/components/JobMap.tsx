@@ -328,7 +328,9 @@ const JobMap = forwardRef<JobMapHandle, JobMapProps>(
 
     return (
       <div className="relative h-full w-full overflow-hidden bg-[hsl(230_24%_10%)]">
-        <div ref={container} className="absolute inset-0" />
+        {/* mapbox-gl.css sets .mapboxgl-map to position: relative, and since the map loads in its own chunk that rule
+            now lands after Tailwind's, so absolute has to be forced or the map collapses to zero height */}
+        <div ref={container} className="!absolute inset-0" />
 
         <div
           className={cn(
