@@ -24,8 +24,8 @@ const Header = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/80 bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-4 px-4 md:px-6">
+    <header className="sticky top-0 z-50 border-b border-border bg-background">
+      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-4 px-4 md:px-6">
         <div className="flex items-center gap-6">
           <Logo />
           <nav className="hidden items-center gap-1 md:flex">
@@ -65,7 +65,7 @@ const Header = () => {
 
         <button
           type="button"
-          className="-mr-2 flex h-10 w-10 items-center justify-center rounded-full text-foreground hover:bg-secondary md:hidden"
+          className="-mr-2 flex h-10 w-10 items-center justify-center rounded-full text-foreground transition-colors duration-150 hover:bg-secondary focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring md:hidden"
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={menuOpen}

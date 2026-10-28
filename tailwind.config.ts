@@ -18,8 +18,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Inter Variable", "Inter", "system-ui", "sans-serif"],
-        display: ["Bricolage Grotesque Variable", "Bricolage Grotesque", "Inter Variable", "system-ui", "sans-serif"],
+        sans: ["var(--font-body)"],
+        display: ["var(--font-display)"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -63,6 +63,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        mark: {
+          DEFAULT: "hsl(var(--ink))",
+          foreground: "hsl(var(--ink-foreground))",
+        },
+        shade: "hsl(var(--shade))",
+        surface: "hsl(var(--glass))",
         job: {
           fulltime: "hsl(var(--job-fulltime))",
           parttime: "hsl(var(--job-parttime))",

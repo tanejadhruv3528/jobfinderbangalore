@@ -17,7 +17,7 @@ import { FilterState, Job } from '@/types';
 import { fetchJobs } from '@/services/jobService';
 import { BANGALORE_CENTER, calculateDistance, nearBangaloreOrCenter } from '@/lib/distance';
 import { commuteMinutes, reachKm } from '@/lib/commute';
-import { useIsDesktop } from '@/hooks/use-mobile';
+import { useIsDesktop, useIsWide } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 
 // mapbox-gl is most of the JavaScript, so the map loads in its own chunk while the intro paints
@@ -27,7 +27,8 @@ type LatLng = { lat: number; lng: number };
 
 const HOME_KEY = 'jobpins.home';
 const INTRO_KEY = 'jobpins.introSeen';
-const PANEL_WIDTH = 440;
+const PANEL_WIDTH = 420;
+const DETAIL_WIDTH = 440;
 
 const readHome = (): LatLng => {
   try {
@@ -41,7 +42,7 @@ const readHome = (): LatLng => {
 
 const panelMotion = {
   initial: { opacity: 0, x: -24 },
-  animate: { opacity: 1, x: 0, transition: { type: 'spring', stiffness: 260, damping: 30, delay: 0.25 } },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.32, ease: [0.16, 1, 0.3, 1], delay: 0.15 } },
   exit: { opacity: 0, x: -24 },
 } as const;
 
@@ -51,28 +52,28 @@ const ExploreActions = () => {
     <div className="flex items-center gap-2">
       {user ? (
         <>
-          <Button variant="ghost" size="icon" className="glass h-9 w-9 hover:bg-white/10 lg:hidden" asChild>
+          <Button variant="ghost" size="icon" className="map-surface h-10 w-10 lg:hidden" asChild>
             <Link to="/my-jobs" aria-label="My listings">
               <LayoutDashboard />
             </Link>
           </Button>
-          <Button variant="ghost" size="sm" className="glass hidden hover:bg-white/10 lg:inline-flex" asChild>
+          <Button variant="ghost" className="map-surface hidden lg:inline-flex" asChild>
             <Link to="/my-jobs">
               <LayoutDashboard />
               My listings
             </Link>
           </Button>
           {/* Phones have room for one icon here; sign out is in the My listings header */}
-          <Button variant="ghost" size="icon" className="glass hidden h-9 w-9 hover:bg-white/10 lg:inline-flex" onClick={signOut} aria-label="Sign out">
+          <Button variant="ghost" size="icon" className="map-surface hidden h-10 w-10 lg:inline-flex" onClick={signOut} aria-label="Sign out">
             <LogOut />
           </Button>
         </>
       ) : (
-        <Button variant="ghost" size="sm" className="glass hidden hover:bg-white/10 lg:inline-flex" asChild>
+        <Button variant="ghost" className="map-surface hidden lg:inline-flex" asChild>
           <Link to="/auth">Employer sign in</Link>
         </Button>
       )}
-      <Button variant="ink" size="sm" className="shadow-lift" asChild>
+      <Button variant="ink" className="shadow-lift max-sm:h-10 max-sm:px-3.5" asChild>
         <Link to="/post-a-job">
           <Plus />
           <span className="hidden sm:inline">Post a job</span>
@@ -85,6 +86,7 @@ const ExploreActions = () => {
 
 const Index = () => {
   const isDesktop = useIsDesktop();
+  const isWide = useIsWide();
   const mapRef = useRef<JobMapHandle>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const openJobId = searchParams.get('job');
@@ -260,6 +262,7 @@ const Index = () => {
       }}
       header={commuteCard}
       scrollable={scrollable}
+      showCount={isDesktop}
     />
   );
 
@@ -270,10 +273,13 @@ const Index = () => {
       distance={distances.get(openJob.id)}
       mode={filters.mode}
       onClose={closeDetail}
-      closeIcon={!isDesktop}
-      className="bg-transparent"
+      closeIcon={!isDesktop || isWide}
     />
   );
+
+  // On wide screens the detail docks beside the list, so the map keeps both panels clear
+  const detailBeside = isDesktop && isWide && !!openJob;
+  const mapLeft = PANEL_WIDTH + (detailBeside ? DETAIL_WIDTH : 0);
 
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-background">
@@ -292,8 +298,8 @@ const Index = () => {
             onHomeChange={setHome}
             radiusKm={intro ? 0 : radiusKm}
             intro={intro}
-            padding={isDesktop ? { left: PANEL_WIDTH + 16, top: 80 } : { top: 130, bottom: window.innerHeight * 0.5 }}
-            controlsClassName={isDesktop ? 'bottom-10 right-4' : 'right-3 top-[132px]'}
+            padding={isDesktop ? { left: intro ? Math.min(600, window.innerWidth * 0.46) : mapLeft, top: 72 } : { top: 124, bottom: window.innerHeight * 0.5 }}
+            controlsClassName={isDesktop ? 'bottom-10 right-4' : 'right-3 top-[124px]'}
           />}
         </Suspense>
       </div>
@@ -311,36 +317,17 @@ const Index = () => {
         )}
       </AnimatePresence>
 
+      {/* Actions over the map, top right */}
       <AnimatePresence>
-        {!intro && (
+        {!intro && isDesktop && (
           <motion.div
-            key="topbar"
-            className="pointer-events-none absolute inset-x-0 top-0 z-20 px-3 pt-3 lg:px-4 lg:pt-4"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: 0.15, type: 'spring', stiffness: 260, damping: 30 } }}
-            exit={{ opacity: 0, y: -20 }}
+            key="actions"
+            className="absolute right-4 top-4 z-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { delay: 0.15, duration: 0.22 } }}
+            exit={{ opacity: 0 }}
           >
-            <div className="flex items-start gap-3">
-              <div className="pointer-events-auto glass hidden h-12 shrink-0 items-center rounded-full pl-1.5 pr-4 shadow-lift lg:flex" style={{ width: PANEL_WIDTH }}>
-                <Logo />
-                <span className="ml-auto text-xs text-muted-foreground">Bangalore</span>
-              </div>
-              <div className="pointer-events-auto glass flex h-12 shrink-0 items-center rounded-full px-1.5 shadow-lift lg:hidden">
-                <Logo compact />
-              </div>
-              <FilterBar
-                filters={filters}
-                onChange={setFilters}
-                className="pointer-events-auto min-w-0 flex-1 max-lg:[&>div]:hidden"
-              />
-              <div className="pointer-events-auto shrink-0 pt-1.5 lg:pt-1">
-                <ExploreActions />
-              </div>
-            </div>
-            {/* Job type chips sit on their own row on small screens */}
-            <div className="pointer-events-auto mt-2 lg:hidden">
-              <FilterBar filters={filters} onChange={setFilters} className="[&>label]:hidden" />
-            </div>
+            <ExploreActions />
           </motion.div>
         )}
       </AnimatePresence>
@@ -351,52 +338,75 @@ const Index = () => {
             <motion.aside
               key="panel"
               {...panelMotion}
-              className="glass absolute bottom-4 left-4 top-[80px] z-20 overflow-hidden rounded-[28px] shadow-pop"
+              aria-label="Jobs"
+              className="absolute bottom-0 left-0 top-0 z-20 flex flex-col border-r border-border bg-card shadow-pop"
               style={{ width: PANEL_WIDTH }}
             >
-              <AnimatePresence mode="wait" initial={false}>
-                {openJob ? (
-                  <motion.div
-                    key={`detail-${openJob.id}`}
-                    className="h-full"
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 40 }}
-                    transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-                  >
-                    {detail}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="list"
-                    className="h-full"
-                    initial={{ opacity: 0, x: -40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -40 }}
-                    transition={{ type: 'spring', stiffness: 380, damping: 36 }}
-                  >
-                    {list(true)}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="shrink-0 space-y-4 border-b border-border px-4 pb-4 pt-4">
+                <div className="flex h-10 items-center justify-between">
+                  <Logo />
+                  <span className="text-sm text-muted-foreground">Bangalore</span>
+                </div>
+                <FilterBar filters={filters} onChange={setFilters} />
+              </div>
+              <div className="relative min-h-0 flex-1">
+                <AnimatePresence mode="wait" initial={false}>
+                  {openJob && !isWide ? (
+                    <motion.div
+                      key={`detail-${openJob.id}`}
+                      className="h-full"
+                      initial={{ opacity: 0, x: 24 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 24 }}
+                      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                      {detail}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="list"
+                      className="h-full"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      {list(true)}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </motion.aside>
           )}
         </AnimatePresence>
       ) : (
         !intro && (
           <>
+            <div className="absolute inset-x-0 top-0 z-20 space-y-2 px-3 pt-3">
+              <div className="flex items-center gap-2">
+                <div className="map-surface flex h-11 shrink-0 items-center rounded-full px-1">
+                  <Logo compact />
+                </div>
+                <FilterBar filters={filters} onChange={setFilters} className="min-w-0 flex-1 [&>div]:hidden" />
+                <div className="shrink-0">
+                  <ExploreActions />
+                </div>
+              </div>
+              <FilterBar filters={filters} onChange={setFilters} className="[&>label]:hidden" />
+            </div>
+
             <BottomSheet
               snap={sheetSnap}
               onSnapChange={setSheetSnap}
               header={
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <p className="font-display text-xl font-bold">
                     {isLoading ? 'Finding jobs…' : `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'}`}
                     <span className="ml-1.5 font-sans text-sm font-medium text-muted-foreground">
                       {filters.maxMinutes ? `within ${filters.maxMinutes} min` : 'in Bangalore'}
                     </span>
                   </p>
-                  <span className="flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-semibold text-foreground/80">
+                  <span className="flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold text-foreground/85">
                     <CommuteIcon mode={filters.mode} className="h-3.5 w-3.5" />
                     {filters.maxMinutes ? `${filters.maxMinutes} min` : 'Any'}
                   </span>
@@ -410,11 +420,11 @@ const Index = () => {
               {openJob && (
                 <motion.div
                   key="mobile-detail"
-                  className="fixed inset-0 z-[60] bg-background"
+                  className="fixed inset-0 z-[60] bg-card"
                   initial={{ y: '100%' }}
                   animate={{ y: 0 }}
                   exit={{ y: '100%' }}
-                  transition={{ type: 'spring', stiffness: 320, damping: 34 }}
+                  transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
                 >
                   {detail}
                 </motion.div>
@@ -423,6 +433,24 @@ const Index = () => {
           </>
         )
       )}
+
+      {/* Wide screens: the detail docks beside the list */}
+      <AnimatePresence>
+        {!intro && detailBeside && openJob && (
+          <motion.section
+            key={`beside-${openJob.id}`}
+            aria-label="Job detail"
+            className="absolute bottom-0 top-0 z-20 border-r border-border bg-background shadow-pop"
+            style={{ left: PANEL_WIDTH, width: DETAIL_WIDTH }}
+            initial={{ opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+            transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {detail}
+          </motion.section>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

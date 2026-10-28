@@ -1,0 +1,39 @@
+/* Hallmark · checked: part of the JobPins system, stamped in src/index.css · v2.0.0 */
+/* JobPins tokens. The shadcn names in index.css (--background, --primary, …) hold the raw HSL channels;
+   the Hallmark roles below read from them, so there is one source for every colour. */
+:root {
+  --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px; --space-3xl: 96px; --space-4xl: 144px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-in: cubic-bezier(0.7, 0, 0.84, 0); --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms;
+  --container: 1440px; --gutter: 64px; --gap-columns: 32px;
+  --z-base: 1; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200; --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
+
+  /* Bangalore at night: ink paper, coral pins, warm light text */
+  --color-paper: hsl(var(--background));
+  --color-paper-2: hsl(var(--card));
+  --color-paper-3: hsl(var(--secondary));
+  --color-ink: hsl(var(--foreground));
+  --color-ink-2: hsl(var(--foreground) / 0.82);
+  --color-muted: hsl(var(--muted-foreground));
+  --color-rule: hsl(var(--border));
+  --color-accent: hsl(var(--primary));
+  --color-accent-ink: hsl(var(--primary-foreground));
+  --color-focus: hsl(var(--ring));
+  --color-error: hsl(var(--destructive));
+  --color-success: hsl(var(--success));
+  /* Light marks drawn on the map: pin strokes, the home dot, map tags */
+  --color-mark: hsl(var(--ink));
+  --color-mark-ink: hsl(var(--ink-foreground));
+  --color-featured: hsl(var(--job-featured));
+  --color-shade: hsl(var(--shade) / 0.5);
+  --color-shade-soft: hsl(var(--shade) / 0.32);
+
+  --font-display: "Bricolage Grotesque Variable", "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-outlier: var(--font-body);
+
+  --radius-card: var(--radius); --radius-pill: 999px; --rule-hair: 1px; --shadow-card: var(--shadow-lg);
+  --tracking-display: -0.02em;
+}
+@media (max-width: 60rem) { :root { --gutter: 24px; } }
+@media (max-width: 40rem) { :root { --gutter: 16px; --gap-columns: 16px; } }

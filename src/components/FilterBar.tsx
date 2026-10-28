@@ -19,8 +19,8 @@ export const DEFAULT_FILTERS: FilterState = {
 
 const chip = (active: boolean) =>
   cn(
-    'h-10 shrink-0 rounded-full px-4 text-sm font-medium transition-all duration-200 active:scale-95',
-    active ? 'bg-ink text-ink-foreground shadow-lift' : 'glass text-foreground/80 hover:bg-white/10 hover:text-foreground',
+    'h-9 shrink-0 rounded-full px-4 text-sm font-medium transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+    active ? 'bg-ink text-ink-foreground' : 'map-surface text-foreground/80 hover:border-foreground/40 hover:text-foreground active:bg-secondary',
   );
 
 /** Search box and job-type chips that float over the map */
@@ -30,8 +30,8 @@ const FilterBar = ({ filters, onChange, className }: FilterBarProps) => {
   const set = <K extends keyof FilterState>(key: K, value: FilterState[K]) => onChange({ ...filters, [key]: value });
 
   return (
-    <div className={cn('flex flex-col gap-2.5 xl:flex-row xl:items-center', className)}>
-      <label className="glass relative block rounded-full shadow-lift xl:w-[380px]">
+    <div className={cn('flex flex-col gap-2.5', className)}>
+      <label className="map-surface relative block rounded-full focus-within:border-ring">
         <span className="sr-only">Search jobs</span>
         <Search className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-foreground/60" />
         <input
@@ -39,13 +39,13 @@ const FilterBar = ({ filters, onChange, className }: FilterBarProps) => {
           value={filters.searchQuery}
           onChange={(e) => set('searchQuery', e.target.value)}
           placeholder={compact ? "Search" : "Search role, company, skill or area"}
-          className={cn('h-12 w-full rounded-full bg-transparent pl-11 text-base text-foreground placeholder:text-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/60 [&::-webkit-search-cancel-button]:hidden', filters.searchQuery ? 'pr-11' : 'pr-4')}
+          className={cn('h-11 w-full rounded-full bg-transparent pl-11 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring [&::-webkit-search-cancel-button]:hidden', filters.searchQuery ? 'pr-11' : 'pr-4')}
         />
         {filters.searchQuery && (
           <button
             type="button"
             onClick={() => set('searchQuery', '')}
-            className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-foreground/60 hover:bg-white/10 hover:text-foreground"
+            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-foreground/60 transition-colors duration-150 hover:bg-secondary hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
             aria-label="Clear search"
           >
             <X className="h-4 w-4" />
@@ -53,8 +53,8 @@ const FilterBar = ({ filters, onChange, className }: FilterBarProps) => {
         )}
       </label>
 
-      <div className="scrollbar-none -mx-4 flex items-center gap-2 overflow-x-auto px-4 py-1 xl:mx-0 xl:px-0">
-        <button type="button" className={chip(filters.jobType === 'all')} onClick={() => set('jobType', 'all')}>
+      <div className="scrollbar-none -mx-4 flex items-center gap-2 overflow-x-auto px-4 py-1">
+        <button type="button" className={chip(filters.jobType === 'all')} onClick={() => set('jobType', 'all')} aria-pressed={filters.jobType === 'all'}>
           All jobs
         </button>
         {JOB_TYPES.map((type) => (

@@ -50,7 +50,7 @@ const BottomSheet = ({ snap, onSnapChange, header, children }: BottomSheetProps)
 
   return (
     <motion.div
-      className="glass fixed inset-x-0 bottom-0 z-30 flex flex-col rounded-t-[28px] shadow-pop"
+      className="fixed inset-x-0 bottom-0 z-30 flex flex-col rounded-t-[28px] border-t border-border bg-card shadow-pop"
       style={{ height: sheetHeight, y }}
       drag="y"
       dragControls={controls}
@@ -64,7 +64,7 @@ const BottomSheet = ({ snap, onSnapChange, header, children }: BottomSheetProps)
         onPointerDown={(e) => controls.start(e)}
         onClick={() => snap === 'peek' && onSnapChange('half')}
       >
-        <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-white/25" />
+        <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-foreground/25" />
         {header}
       </div>
       {/* At the half stop the lower part of the sheet is off screen, so pad the scroll area to keep the end reachable */}

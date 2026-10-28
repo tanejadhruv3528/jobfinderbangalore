@@ -69,7 +69,7 @@ const LocationPicker = ({ initial, onPick, onClose }: { initial: Point | null; o
         <div ref={container} className="!absolute inset-0" />
         {failed && (
           <div role="alert" className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-muted-foreground">
-            The map couldn't load. Check your connection, or paste a Google Maps link instead.
+            The map couldn’t load. Check your connection, or paste a Google Maps link instead.
           </div>
         )}
       </div>

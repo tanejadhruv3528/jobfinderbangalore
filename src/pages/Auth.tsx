@@ -35,40 +35,9 @@ const FieldError = ({ id, message }: { id: string; message?: string }) =>
     </p>
   ) : null;
 
-/** Decorative map with a few pins, drawn for the brand panel. */
-const BrandMap = () => (
-  <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" className="h-full w-full" aria-hidden="true">
-    <g stroke="hsl(0 0% 100% / 0.12)" strokeWidth="10" fill="none" strokeLinecap="round">
-      <path d="M-20 210 C 80 190, 140 120, 230 130 S 360 80, 430 60" />
-      <path d="M60 -20 C 90 80, 70 160, 120 320" />
-      <path d="M260 -20 C 250 90, 300 170, 290 320" />
-    </g>
-    <g stroke="hsl(0 0% 100% / 0.06)" strokeWidth="4" fill="none">
-      <path d="M-20 80 L 430 110" />
-      <path d="M-20 260 L 430 240" />
-      <path d="M170 -20 L 190 320" />
-      <path d="M340 -20 L 360 320" />
-    </g>
-    <circle cx="300" cy="200" r="46" fill="hsl(150 40% 40% / 0.18)" />
-    {[
-      [118, 150, true],
-      [232, 112, false],
-      [292, 196, false],
-      [190, 236, false],
-      [338, 92, false],
-    ].map(([x, y, big], i) => (
-      <g key={i} transform={`translate(${x as number - (big ? 17 : 12)} ${y as number - (big ? 42 : 30)}) scale(${big ? 1 : 0.7})`}>
-        <path
-          d="M17 1.5C8.4 1.5 1.5 8.3 1.5 16.8c0 10.6 13.2 22 14.4 23a1.7 1.7 0 0 0 2.2 0c1.2-1 14.4-12.4 14.4-23C32.5 8.3 25.6 1.5 17 1.5Z"
-          fill={big ? 'hsl(var(--primary))' : 'hsl(0 0% 100% / 0.9)'}
-          stroke="hsl(230 26% 5%)"
-          strokeWidth="2.5"
-        />
-        <circle cx="17" cy="16.5" r="5" fill={big ? '#fff' : 'hsl(230 26% 5%)'} />
-      </g>
-    ))}
-  </svg>
-);
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoidGFuZWphLWRocnV2IiwiYSI6ImNtdmpjZm14czBjaWEyeXNieXoyNHJ2b2sifQ.8NGZ41t_T45oLpYR4ee0Hg';
+/** The real city, from the same map job seekers browse */
+const CITY_MAP = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/77.6,12.965,11.3,0/880x560@2x?access_token=${MAPBOX_TOKEN}`;
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -201,30 +170,24 @@ const Auth = () => {
   return (
     <div className="grid min-h-[100dvh] bg-background lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       {/* Brand panel */}
-      <aside className="relative hidden overflow-hidden border-r border-border bg-[hsl(230_26%_5%)] lg:flex lg:flex-col">
-        <div className="bg-paper-grid absolute inset-0" />
-        <div className="pointer-events-none absolute -left-40 top-1/3 h-[520px] w-[520px] rounded-full bg-primary/25 blur-[140px]" />
+      <aside className="relative hidden overflow-hidden border-r border-border bg-card lg:flex lg:flex-col">
         <div className="relative flex h-full flex-col p-10 xl:p-14">
           <Logo />
           <div className="my-auto max-w-md py-10">
-            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">For employers</p>
-            <h1 className="mt-4 text-5xl font-bold leading-[1.02] xl:text-6xl">
-              Hire people who live <span className="text-gradient">around the corner.</span>
-            </h1>
+            <h1 className="max-w-[14ch] text-5xl font-bold leading-[1.02] xl:text-6xl">Hire people who live around the corner.</h1>
+            <p className="mt-3 text-[15px] text-muted-foreground">For employers</p>
             <ul className="mt-8 space-y-3">
               {PERKS.map((perk) => (
                 <li key={perk} className="flex items-start gap-3 text-[15px] text-foreground/75">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/20 text-primary">
-                    <Check className="h-3 w-3" strokeWidth={3} />
-                  </span>
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={3} aria-hidden="true" />
                   {perk}
                 </li>
               ))}
             </ul>
           </div>
-          <div className="-mx-10 -mb-10 h-64 xl:-mx-14 xl:-mb-14">
-            <BrandMap />
-          </div>
+          <figure className="-mx-10 -mb-10 h-64 overflow-hidden border-t border-border xl:-mx-14 xl:-mb-14">
+            <img src={CITY_MAP} alt="Map of Bangalore" className="h-full w-full object-cover" />
+          </figure>
         </div>
       </aside>
 
@@ -256,7 +219,7 @@ const Auth = () => {
                 aria-selected={isLogin === login}
                 onClick={() => switchMode(login as boolean)}
                 className={cn(
-                  'h-10 rounded-full text-sm font-semibold transition-all',
+                  'h-10 rounded-full text-sm font-semibold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
                   isLogin === login ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -358,7 +321,7 @@ const Auth = () => {
                 <div>
                   <p>{problem.message}</p>
                   {problem.canResend && (
-                    <button type="button" onClick={handleResend} disabled={isLoading} className="mt-1.5 font-semibold text-primary underline-offset-4 hover:underline">
+                    <button type="button" onClick={handleResend} disabled={isLoading} className="mt-1.5 whitespace-nowrap font-semibold text-primary underline-offset-4 hover:underline">
                       Resend confirmation email
                     </button>
                   )}
@@ -367,8 +330,8 @@ const Auth = () => {
             )}
 
             {notice && (
-              <div role="status" className="flex items-start gap-2.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-sm">
-                <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+              <div role="status" className="flex items-start gap-2.5 rounded-2xl border border-success/30 bg-success/10 p-3.5 text-sm">
+                <MailCheck className="mt-0.5 h-4 w-4 shrink-0 text-success" />
                 <p>{notice}</p>
               </div>
             )}
