@@ -28,17 +28,17 @@ const TYPE_TEXT: Record<string, string> = {
   internship: 'text-job-internship',
 };
 
-/** The travel time leads the row, set like a departure board; past an hour it reads in hours */
+/** The travel time leads the row, set like a departure board; past an hour the unit line reads "hours" so "1:16" isn't read as 1 hour plus a separate 16 minutes */
 const Minutes = ({ minutes, mode, distance, active }: { minutes: number; mode: CommuteMode; distance: number; active: boolean }) => {
   const long = minutes >= 60;
   return (
     <div className="flex flex-col items-start pt-0.5" title={`${formatDistance(distance)} away`}>
       <span className={cn('num font-display text-[26px] font-bold leading-none', active ? 'text-primary' : 'text-foreground')}>
-        {long ? `${Math.floor(minutes / 60)}h` : minutes}
+        {long ? `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}` : minutes}
       </span>
       <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
         <CommuteIcon mode={mode} className="h-3.5 w-3.5" />
-        {long ? `${minutes % 60}m` : 'min'}
+        {long ? 'hours' : 'min'}
       </span>
     </div>
   );

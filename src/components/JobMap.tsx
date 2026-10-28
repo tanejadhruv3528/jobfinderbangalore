@@ -341,8 +341,18 @@ const JobMap = forwardRef<JobMapHandle, JobMapProps>(
         <div ref={container} className="!absolute inset-0" />
 
         {failed && !loaded && !intro && (
-          <div role="alert" className="absolute inset-0 z-20 flex items-center justify-center p-6">
-            <div className="map-surface max-w-sm rounded-3xl p-6 text-center shadow-lift">
+          // Centre the card in the part of the map the panels leave visible
+          <div
+            role="alert"
+            className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+            style={{
+              paddingTop: (padding.top ?? 0) + 24,
+              paddingBottom: (padding.bottom ?? 0) + 24,
+              paddingLeft: (padding.left ?? 0) + 24,
+              paddingRight: (padding.right ?? 0) + 24,
+            }}
+          >
+            <div className="map-surface pointer-events-auto max-w-sm rounded-3xl p-6 text-center shadow-lift">
               <MapPinOff className="mx-auto h-8 w-8 text-primary" />
               <p className="mt-3 font-display text-lg font-bold">The map couldn’t load</p>
               <p className="mt-1 text-sm text-muted-foreground">Check your internet connection, then refresh. You can still browse every job in the list.</p>

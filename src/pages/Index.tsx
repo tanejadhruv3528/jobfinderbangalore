@@ -440,7 +440,7 @@ const Index = () => {
           <motion.section
             key={`beside-${openJob.id}`}
             aria-label="Job detail"
-            className="absolute bottom-0 top-0 z-[19] border-r border-border bg-background shadow-pop"
+            className="absolute bottom-0 top-0 z-20 border-r border-border bg-background shadow-pop"
             style={{ left: PANEL_WIDTH, width: DETAIL_WIDTH }}
             initial={{ opacity: 0, x: -24 }}
             animate={{ opacity: 1, x: 0 }}
