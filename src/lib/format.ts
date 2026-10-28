@@ -28,23 +28,15 @@ export function initials(name: string): string {
   return (words[0][0] + (words[1]?.[0] ?? '')).toUpperCase();
 }
 
-const AVATAR_COLORS = [
-  ['hsl(11 70% 22%)', 'hsl(11 100% 78%)'],
-  ['hsl(217 50% 22%)', 'hsl(217 100% 80%)'],
-  ['hsl(262 40% 24%)', 'hsl(262 100% 84%)'],
-  ['hsl(152 40% 18%)', 'hsl(152 70% 66%)'],
-  ['hsl(40 60% 18%)', 'hsl(42 100% 68%)'],
-  ['hsl(330 45% 22%)', 'hsl(330 100% 82%)'],
-  ['hsl(188 50% 18%)', 'hsl(188 80% 66%)'],
-  ['hsl(230 12% 22%)', 'hsl(230 20% 86%)'],
-];
+// Pairs live as --avatar-N-bg / --avatar-N-fg tokens in index.css
+const AVATAR_COUNT = 8;
 
 /** Stable background/foreground pair for a company name. */
 export function avatarColors(name: string): { bg: string; fg: string } {
   let hash = 0;
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
-  const [bg, fg] = AVATAR_COLORS[hash % AVATAR_COLORS.length];
-  return { bg, fg };
+  const n = (hash % AVATAR_COUNT) + 1;
+  return { bg: `hsl(var(--avatar-${n}-bg))`, fg: `hsl(var(--avatar-${n}-fg))` };
 }
 
 export function directionsUrl(lat: number, lng: number): string {

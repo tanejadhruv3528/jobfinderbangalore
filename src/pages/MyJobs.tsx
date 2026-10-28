@@ -26,14 +26,14 @@ import { JOB_TYPE_BADGE, JOB_TYPE_LABELS } from '@/lib/jobTypes';
 import { formatDate, postedAgo } from '@/lib/format';
 
 const Stat = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="min-w-0 rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-5">
-    <p className="text-xs text-muted-foreground sm:text-sm">{label}</p>
-    <p className="mt-1 truncate font-display text-xl font-bold sm:text-3xl">{value}</p>
+  <div className="min-w-0 px-4 first:pl-0">
+    <dt className="text-xs text-muted-foreground sm:text-sm">{label}</dt>
+    <dd className="num mt-1 truncate font-display text-2xl font-bold sm:text-4xl">{value}</dd>
   </div>
 );
 
 const RowSkeleton = () => (
-  <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+  <div className="flex items-center gap-4 border-b border-border py-5">
     <Skeleton className="h-12 w-12 rounded-2xl" />
     <div className="flex-1 space-y-2">
       <Skeleton className="h-4 w-1/2" />
@@ -101,8 +101,7 @@ const MyJobs = () => {
       <main className="mx-auto max-w-5xl px-4 pb-20 pt-10 md:px-6 md:pt-14">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">Employer dashboard</p>
-            <h1 className="mt-3 text-4xl font-bold leading-[1.05] md:text-5xl">Your listings</h1>
+            <h1 className="text-4xl font-bold leading-[1.05] md:text-5xl">Your listings</h1>
             <p className="mt-2 text-muted-foreground">{companyName}</p>
           </div>
           <Button size="lg" asChild>
@@ -113,13 +112,13 @@ const MyJobs = () => {
           </Button>
         </div>
 
-        <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-3">
+        <dl className="mt-8 grid grid-cols-3 divide-x divide-border border-y border-border py-5">
           <Stat label="Live jobs" value={isLoading ? '–' : jobs.length} />
           <Stat label="Featured" value={isLoading ? '–' : jobs.filter((j) => j.isFeatured).length} />
           <Stat label="Last posted" value={isLoading ? '–' : jobs[0] ? postedAgo(jobs[0].createdAt) : 'Never'} />
-        </div>
+        </dl>
 
-        <div className="mt-8 space-y-3">
+        <div className="mt-4">
           {isLoading ? (
             <>
               <RowSkeleton />
@@ -127,11 +126,9 @@ const MyJobs = () => {
               <RowSkeleton />
             </>
           ) : jobs.length === 0 ? (
-            <div className="bg-paper-grid rounded-3xl border border-dashed border-border px-6 py-16 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-card shadow-soft">
-                <Briefcase className="h-6 w-6 text-primary" />
-              </div>
-              <h2 className="mt-5 text-2xl font-bold">No jobs pinned yet</h2>
+            <div className="px-6 py-16 text-center">
+              <Briefcase className="mx-auto h-7 w-7 text-primary" aria-hidden="true" />
+              <h2 className="mx-auto mt-4 text-2xl font-bold">No jobs pinned yet</h2>
               <p className="mx-auto mt-1.5 max-w-sm text-muted-foreground">
                 Post your first job and it shows up on the map for people nearby straight away.
               </p>
@@ -146,7 +143,7 @@ const MyJobs = () => {
             jobs.map((job) => (
               <article
                 key={job.id}
-                className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow hover:shadow-soft sm:flex-row sm:items-center sm:p-5"
+                className="flex flex-col gap-4 border-b border-border py-5 sm:flex-row sm:items-center"
               >
                 <div className="flex min-w-0 flex-1 items-start gap-4">
                   <CompanyAvatar name={job.company?.name || companyName} size="md" />
@@ -200,7 +197,7 @@ const MyJobs = () => {
                       <AlertDialogHeader>
                         <AlertDialogTitle className="font-display text-2xl">Delete this job?</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This permanently removes "{job.title}" from the map. It can't be undone.
+                          This permanently removes “{job.title}” from the map. It can’t be undone.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

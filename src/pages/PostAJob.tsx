@@ -67,17 +67,15 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 const Section = ({ step, title, hint, children }: { step: number; title: string; hint?: string; children: React.ReactNode }) => (
-  <section className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-7">
-    <div className="mb-6 flex items-start gap-3.5">
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink font-display text-sm font-bold text-ink-foreground">
-        {step}
-      </span>
-      <div>
-        <h2 className="text-xl font-bold leading-tight">{title}</h2>
-        {hint && <p className="mt-0.5 text-sm text-muted-foreground">{hint}</p>}
-      </div>
+  <section className="grid grid-cols-[minmax(0,1fr)] gap-4 border-t border-border pt-7 sm:grid-cols-[56px_minmax(0,1fr)]">
+    <span className="num font-display text-[34px] font-bold leading-none text-primary" aria-hidden="true">
+      {step}
+    </span>
+    <div className="min-w-0">
+      <h2 className="text-2xl font-bold leading-tight">{title}</h2>
+      {hint && <p className="mt-1 text-sm text-muted-foreground">{hint}</p>}
+      <div className="mt-6 space-y-5">{children}</div>
     </div>
-    <div className="space-y-5">{children}</div>
   </section>
 );
 
@@ -205,12 +203,10 @@ const PostAJob = () => {
     return (
       <div className="min-h-screen bg-background">
         <Header />
-        <main className="bg-paper-grid flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-16">
-          <div className="w-full max-w-md animate-fade-up rounded-3xl border border-border bg-card p-8 text-center shadow-lift sm:p-10">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-accent text-primary">
-              <PartyPopper className="h-8 w-8" />
-            </div>
-            <h1 className="mt-6 text-3xl font-bold leading-tight">Your job is live</h1>
+        <main className="flex min-h-[calc(100dvh-4rem)] items-center justify-center px-4 py-16">
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-8 text-center shadow-lift sm:p-10">
+            <PartyPopper className="mx-auto h-8 w-8 text-primary" aria-hidden="true" />
+            <h1 className="mx-auto mt-5 text-3xl font-bold leading-tight">Your job is live</h1>
             <p className="mt-2 text-muted-foreground">
               <span className="font-semibold text-foreground">{postedTitle}</span> is now pinned on the map for people nearby.
             </p>
@@ -239,15 +235,14 @@ const PostAJob = () => {
       <Header />
       <main className="mx-auto max-w-6xl px-4 pb-20 pt-10 md:px-6 md:pt-14">
         <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">Post a job</p>
-          <h1 className="mt-3 text-4xl font-bold leading-[1.05] md:text-5xl">Put your job on the map</h1>
+          <h1 className="text-4xl font-bold leading-[1.05] md:text-5xl">Put your job on the map</h1>
           <p className="mt-3 text-lg text-muted-foreground">
             It takes about two minutes and goes live instantly for people nearby.
           </p>
         </div>
 
         <div className="mt-10 grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-10">
-          <form onSubmit={handleSubmit(onSubmit)} className="min-w-0 space-y-5" noValidate>
+          <form onSubmit={handleSubmit(onSubmit)} className="min-w-0 space-y-10" noValidate>
             <Section step={1} title="The role" hint="What you're hiring for">
               <div className="space-y-2">
                 <Label htmlFor="title">Job title</Label>
@@ -271,7 +266,7 @@ const PostAJob = () => {
                       onClick={() => setValue("job_type", type)}
                       aria-pressed={values.job_type === type}
                       className={cn(
-                        "h-11 rounded-xl border text-sm font-semibold transition-colors",
+                        "h-11 rounded-xl border text-sm font-semibold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                         values.job_type === type
                           ? "border-ink bg-ink text-ink-foreground"
                           : "border-input bg-card text-foreground/80 hover:border-foreground/30",
@@ -336,7 +331,7 @@ const PostAJob = () => {
                     Pick on the map
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">Only use your current location if you're at the workplace right now.</p>
+                <p className="text-xs text-muted-foreground">Only use your current location if you’re at the workplace right now.</p>
                 <FieldError message={geoError ?? undefined} />
               </div>
 
@@ -383,7 +378,7 @@ const PostAJob = () => {
               </div>
             </Section>
 
-            <div className="flex flex-col-reverse items-center gap-4 pt-2 sm:flex-row sm:justify-between">
+            <div className="flex flex-col-reverse items-center gap-4 border-t border-border pt-7 sm:flex-row sm:justify-between">
               <p className="text-center text-sm text-muted-foreground sm:text-left">
                 By posting you confirm this is a genuine job in Bangalore.
               </p>
@@ -419,7 +414,7 @@ const PostAJob = () => {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="bg-paper-grid flex h-full flex-col items-center justify-center gap-1 text-center">
+                    <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
                       <p className="text-sm font-semibold text-foreground/70">Your pin appears here</p>
                       <p className="text-xs text-muted-foreground">Paste a Google Maps link in step 2</p>
                     </div>
@@ -427,21 +422,21 @@ const PostAJob = () => {
                   {coords && (
                   <svg
                     viewBox="0 0 34 42"
-                    className="absolute left-1/2 top-1/2 h-12 w-10 -translate-x-1/2 -translate-y-full animate-fade-up drop-shadow-lg"
+                    className="absolute left-1/2 top-1/2 h-12 w-10 -translate-x-1/2 -translate-y-full drop-shadow-lg"
                     aria-hidden="true"
                   >
                     <path
                       d="M17 1.5C8.4 1.5 1.5 8.3 1.5 16.8c0 10.6 13.2 22 14.4 23a1.7 1.7 0 0 0 2.2 0c1.2-1 14.4-12.4 14.4-23C32.5 8.3 25.6 1.5 17 1.5Z"
-                      fill="hsl(var(--primary))"
-                      stroke="#fff"
+                      fill="var(--color-accent)"
+                      stroke="var(--color-mark)"
                       strokeWidth="2.5"
                     />
-                    <circle cx="17" cy="16.5" r="5" fill="#fff" />
+                    <circle cx="17" cy="16.5" r="5" fill="var(--color-mark)" />
                   </svg>
                   )}
                 </div>
                 <div className="p-3">
-                  <JobCard job={previewJob} className="border-transparent shadow-none" />
+                  <JobCard job={previewJob} />
                 </div>
               </div>
               <p className="mt-3 hidden text-xs text-muted-foreground lg:block">

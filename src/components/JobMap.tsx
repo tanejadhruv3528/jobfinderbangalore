@@ -55,7 +55,7 @@ interface JobMapProps {
 }
 
 const iconButton =
-  'flex h-10 w-10 items-center justify-center text-foreground/85 transition-colors hover:bg-white/10 hover:text-foreground disabled:opacity-60';
+  'flex h-10 w-10 items-center justify-center text-foreground/85 transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring active:bg-secondary/70 disabled:cursor-not-allowed disabled:opacity-60';
 
 const JobMap = forwardRef<JobMapHandle, JobMapProps>(
   (
@@ -335,18 +335,18 @@ const JobMap = forwardRef<JobMapHandle, JobMapProps>(
     };
 
     return (
-      <div className="relative h-full w-full overflow-hidden bg-[hsl(230_24%_10%)]">
+      <div className="relative h-full w-full overflow-hidden bg-background">
         {/* mapbox-gl.css sets .mapboxgl-map to position: relative, and since the map loads in its own chunk that rule
             now lands after Tailwind's, so absolute has to be forced or the map collapses to zero height */}
         <div ref={container} className="!absolute inset-0" />
 
         {failed && !loaded && !intro && (
           <div role="alert" className="absolute inset-0 z-20 flex items-center justify-center p-6">
-            <div className="glass max-w-sm rounded-3xl p-6 text-center shadow-lift">
+            <div className="map-surface max-w-sm rounded-3xl p-6 text-center shadow-lift">
               <MapPinOff className="mx-auto h-8 w-8 text-primary" />
-              <p className="mt-3 font-display text-lg font-bold">The map couldn't load</p>
+              <p className="mt-3 font-display text-lg font-bold">The map couldn’t load</p>
               <p className="mt-1 text-sm text-muted-foreground">Check your internet connection, then refresh. You can still browse every job in the list.</p>
-              <button type="button" onClick={() => window.location.reload()} className="mt-4 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">
+              <button type="button" onClick={() => window.location.reload()} className="mt-4 h-10 rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
                 Refresh
               </button>
             </div>
@@ -355,20 +355,20 @@ const JobMap = forwardRef<JobMapHandle, JobMapProps>(
 
         <div
           className={cn(
-            'absolute z-10 flex flex-col gap-2 transition-opacity duration-500',
+            'absolute z-10 flex flex-col gap-2 transition-opacity duration-300',
             intro && 'pointer-events-none opacity-0',
             controlsClassName,
           )}
         >
-          <div className="glass flex flex-col overflow-hidden rounded-2xl shadow-lift">
+          <div className="map-surface flex flex-col overflow-hidden rounded-2xl shadow-lift">
             <button type="button" className={iconButton} onClick={() => map.current?.zoomIn()} aria-label="Zoom in">
               <Plus className="h-4 w-4" />
             </button>
-            <div className="h-px bg-white/10" />
+            <div className="h-px bg-border" />
             <button type="button" className={iconButton} onClick={() => map.current?.zoomOut()} aria-label="Zoom out">
               <Minus className="h-4 w-4" />
             </button>
-            <div className="h-px bg-white/10" />
+            <div className="h-px bg-border" />
             <button
               type="button"
               className={iconButton}
@@ -387,7 +387,7 @@ const JobMap = forwardRef<JobMapHandle, JobMapProps>(
           </div>
           <button
             type="button"
-            className={cn(iconButton, 'glass rounded-2xl shadow-lift')}
+            className={cn(iconButton, 'map-surface rounded-2xl shadow-lift')}
             onClick={handleLocateMe}
             disabled={isLocating}
             aria-label="Use my location as home"

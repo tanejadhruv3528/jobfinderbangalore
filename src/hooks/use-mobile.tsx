@@ -15,3 +15,19 @@ export function useIsDesktop() {
 
   return isDesktop;
 }
+
+/** At 1280px and up the job detail opens beside the list instead of replacing it. */
+const WIDE_QUERY = "(min-width: 1280px)";
+
+export function useIsWide() {
+  const [isWide, setIsWide] = React.useState(() => window.matchMedia(WIDE_QUERY).matches);
+
+  React.useEffect(() => {
+    const mql = window.matchMedia(WIDE_QUERY);
+    const onChange = () => setIsWide(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
+  return isWide;
+}

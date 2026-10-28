@@ -57,9 +57,7 @@ const ResetPassword = () => {
     <div className="flex min-h-[100dvh] flex-col bg-background px-5 py-6 sm:px-10">
       <Logo />
       <div className="mx-auto my-auto w-full max-w-[400px] py-10">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent text-primary">
-          <KeyRound className="h-6 w-6" />
-        </div>
+        <KeyRound className="h-6 w-6 text-primary" aria-hidden="true" />
 
         {!user && linkExpired ? (
           <>
