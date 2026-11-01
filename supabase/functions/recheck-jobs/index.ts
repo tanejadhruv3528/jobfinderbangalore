@@ -1,6 +1,8 @@
 // 12-hourly re-check agent: opens the apply link of each crawled job that hasn't
 // been checked in the last 12 hours and expires the ones that are gone.
 // Uses no jobs-API calls. Expired jobs drop off the public map (see the jobs RLS policy).
+// LinkedIn links are never opened: JobPins doesn't contact LinkedIn itself. LinkedIn
+// jobs expire through the stale rule, when the crawler stops finding them.
 
 import { adminClient, envInt, finishRun, isAuthorised, json, mapLimit, startRun } from '../_shared/common.ts';
 
@@ -43,9 +45,9 @@ Deno.serve(async (req) => {
     const checkedBefore = new Date(Date.now() - 12 * 3600_000).toISOString();
     const seenBefore = new Date(Date.now() - staleDays * 86400_000).toISOString();
 
-    // Not seen on Google for staleDays: the listing has almost certainly been taken down.
+    // Not seen by the crawler for staleDays: the listing has almost certainly been taken down.
     const { data: stale, error: staleError } = await db.from('jobs')
-      .update({ status: 'expired', expired_reason: `not on Google for ${staleDays} days`, last_checked_at: new Date().toISOString() })
+      .update({ status: 'expired', expired_reason: `not found by the crawler for ${staleDays} days`, last_checked_at: new Date().toISOString() })
       .neq('source', 'employer').eq('status', 'active').lt('last_seen_at', seenBefore)
       .select('id');
     if (staleError) throw new Error(staleError.message);
@@ -53,7 +55,7 @@ Deno.serve(async (req) => {
 
     const { data: jobs, error } = await db.from('jobs')
       .select('id, apply_url')
-      .neq('source', 'employer').eq('status', 'active')
+      .not('source', 'in', '(employer,linkedin)').eq('status', 'active')
       .or(`last_checked_at.is.null,last_checked_at.lt.${checkedBefore}`)
       .order('last_checked_at', { ascending: true, nullsFirst: true })
       .limit(envInt('RECHECK_PER_RUN', 150));
