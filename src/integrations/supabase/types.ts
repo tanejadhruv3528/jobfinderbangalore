@@ -8,7 +8,7 @@ export type Json =
 
 export type JobType = "full-time" | "part-time" | "contract" | "internship"
 export type JobStatus = "active" | "expired"
-export type JobSource = "employer" | "google_jobs"
+export type JobSource = "employer" | "google_jobs" | "linkedin"
 export type LocationPrecision = "exact" | "area" | "company"
 
 export type Database = {

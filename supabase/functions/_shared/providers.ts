@@ -1,7 +1,11 @@
-// Google Jobs results through a SERP API. Set JOBS_PROVIDER to pick one;
-// both return the same Google Jobs data, normalised to RawJob here.
+// LinkedIn job listings through Bright Data's LinkedIn Jobs API (dataset
+// gd_lpfll7v5hcqtkxl6l). Bright Data collects public LinkedIn job pages and
+// sells them as data; JobPins never contacts LinkedIn itself.
+// Discovery runs asynchronously: startDiscovery() returns a snapshot id, and
+// getSnapshot() returns the jobs once Bright Data has finished collecting them.
 
 export interface RawJob {
+  externalId: string;
   title: string;
   company: string;
   location: string;
@@ -13,76 +17,115 @@ export interface RawJob {
   postedAt: string;
 }
 
+const API = 'https://api.brightdata.com/datasets/v3';
+const DATASET_ID = 'gd_lpfll7v5hcqtkxl6l';
 const LOCATION = 'Bengaluru, Karnataka, India';
 
-interface ProviderJob {
-  title?: string;
+interface BrightDataJob {
+  job_posting_id?: string | number;
+  url?: string;
+  job_title?: string;
   company_name?: string;
-  location?: string;
-  via?: string;
-  description?: string;
-  share_link?: string;
-  sharing_link?: string;
-  apply_link?: string;
-  apply_options?: { title?: string; link?: string }[];
-  apply_links?: { source?: string; link?: string }[];
-  detected_extensions?: { schedule_type?: string; salary?: string; posted_at?: string };
+  job_location?: string;
+  job_summary?: string;
+  job_employment_type?: string;
+  job_base_pay_range?: string;
+  base_salary?: { currency?: string; min_amount?: number; max_amount?: number; payment_period?: string } | null;
+  job_posted_date?: string;
+  error?: string;
 }
 
-// Prefer the employer's own careers page, then any board, then Google's share link.
-const pickApplyUrl = (job: ProviderJob): string => {
-  const links = [
-    job.apply_link,
-    ...(job.apply_options ?? []).map((o) => o.link),
-    ...(job.apply_links ?? []).map((o) => o.link),
-  ].filter((l): l is string => !!l && /^https?:\/\//i.test(l));
-  const boards = /linkedin|naukri|indeed|glassdoor|foundit|monster|shine|instahyre|apna|timesjobs|cutshort|wellfound/i;
-  return links.find((l) => !boards.test(l)) ?? links[0] ?? job.share_link ?? job.sharing_link ?? '';
+const apiKey = (): string => {
+  const key = Deno.env.get('BRIGHTDATA_API_KEY');
+  if (!key) throw new Error('BRIGHTDATA_API_KEY is not set');
+  return key;
 };
 
-const normalise = (job: ProviderJob): RawJob => ({
-  title: (job.title ?? '').trim(),
+const call = async (path: string, init: RequestInit = {}): Promise<unknown> => {
+  const res = await fetch(`${API}${path}`, {
+    ...init,
+    headers: { Authorization: `Bearer ${apiKey()}`, 'Content-Type': 'application/json', ...init.headers },
+    signal: AbortSignal.timeout(60_000),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`Bright Data ${res.status}: ${text.slice(0, 200)}`);
+  try {
+    return JSON.parse(text);
+  } catch {
+    // NDJSON fallback
+    return text.split('\n').filter((l) => l.trim()).map((l) => JSON.parse(l));
+  }
+};
+
+const salaryOf = (job: BrightDataJob): string => {
+  const s = job.base_salary;
+  if (s && (s.min_amount || s.max_amount)) {
+    const range = [s.min_amount, s.max_amount].filter((n) => n).join('-');
+    return `${s.currency ?? ''} ${range}${s.payment_period ? ` per ${s.payment_period.toLowerCase()}` : ''}`.trim();
+  }
+  return job.job_base_pay_range ?? '';
+};
+
+const normalise = (job: BrightDataJob): RawJob => ({
+  externalId: String(job.job_posting_id ?? ''),
+  title: (job.job_title ?? '').trim(),
   company: (job.company_name ?? '').trim(),
-  location: (job.location ?? '').trim(),
-  via: (job.via ?? '').replace(/^via\s+/i, '').trim(),
-  description: (job.description ?? '').trim(),
-  applyUrl: pickApplyUrl(job),
-  scheduleType: job.detected_extensions?.schedule_type ?? '',
-  salary: job.detected_extensions?.salary ?? '',
-  postedAt: job.detected_extensions?.posted_at ?? '',
+  location: (job.job_location ?? '').trim(),
+  via: 'LinkedIn',
+  description: (job.job_summary ?? '').trim(),
+  // People apply on LinkedIn itself
+  applyUrl: (job.url ?? '').split('?')[0],
+  scheduleType: job.job_employment_type ?? '',
+  salary: salaryOf(job),
+  postedAt: job.job_posted_date ?? '',
 });
 
-const getJson = async (url: URL): Promise<Record<string, unknown>> => {
-  const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`Jobs API ${res.status}: ${JSON.stringify(body).slice(0, 200)}`);
-  return body as Record<string, unknown>;
+// Starts one discovery request covering every query. Returns the snapshot id.
+export const startDiscovery = async (queries: string[], perQuery: number): Promise<string> => {
+  const params = new URLSearchParams({
+    dataset_id: DATASET_ID,
+    type: 'discover_new',
+    discover_by: 'keyword',
+    include_errors: 'true',
+    notify: 'false',
+  });
+  const timeRange = Deno.env.get('LINKEDIN_TIME_RANGE') ?? 'Past week';
+  const body = {
+    input: queries.map((keyword) => ({
+      keyword,
+      location: LOCATION,
+      country: 'IN',
+      time_range: timeRange,
+      job_type: '',
+      experience_level: '',
+      remote: '',
+      company: '',
+    })),
+    limit_per_input: perQuery,
+  };
+  const res = (await call(`/trigger?${params}`, { method: 'POST', body: JSON.stringify(body) })) as { snapshot_id?: string };
+  if (!res.snapshot_id) throw new Error(`Bright Data returned no snapshot id: ${JSON.stringify(res).slice(0, 200)}`);
+  return res.snapshot_id;
 };
 
-const searchSerpApi = async (query: string, apiKey: string): Promise<RawJob[]> => {
-  const url = new URL('https://serpapi.com/search.json');
-  url.search = new URLSearchParams({
-    engine: 'google_jobs', q: query, location: LOCATION, gl: 'in', hl: 'en', api_key: apiKey,
-  }).toString();
-  const body = await getJson(url);
-  return ((body.jobs_results as ProviderJob[]) ?? []).map(normalise);
-};
+export type Snapshot =
+  | { status: 'pending' }
+  | { status: 'failed'; error: string }
+  | { status: 'ready'; jobs: RawJob[]; records: number };
 
-const searchSearchApi = async (query: string, apiKey: string): Promise<RawJob[]> => {
-  const url = new URL('https://www.searchapi.io/api/v1/search');
-  url.search = new URLSearchParams({
-    engine: 'google_jobs', q: query, location: LOCATION, gl: 'in', hl: 'en', api_key: apiKey,
-  }).toString();
-  const body = await getJson(url);
-  return ((body.jobs as ProviderJob[]) ?? []).map(normalise);
-};
+export const getSnapshot = async (snapshotId: string): Promise<Snapshot> => {
+  const id = encodeURIComponent(snapshotId);
+  const progress = (await call(`/progress/${id}`)) as { status?: string; error_message?: string };
+  if (progress.status === 'failed' || progress.status === 'canceled') {
+    return { status: 'failed', error: progress.error_message ?? progress.status };
+  }
+  if (progress.status !== 'ready') return { status: 'pending' };
 
-// One API call per query (the first page, about 10 jobs).
-export const searchGoogleJobs = (query: string): Promise<RawJob[]> => {
-  const provider = Deno.env.get('JOBS_PROVIDER') ?? 'serpapi';
-  const apiKey = Deno.env.get('JOBS_API_KEY');
-  if (!apiKey) throw new Error('JOBS_API_KEY is not set');
-  if (provider === 'serpapi') return searchSerpApi(query, apiKey);
-  if (provider === 'searchapi') return searchSearchApi(query, apiKey);
-  throw new Error(`Unknown JOBS_PROVIDER "${provider}" (use serpapi or searchapi)`);
+  const data = await call(`/snapshot/${id}?format=json`);
+  const records = Array.isArray(data) ? (data as BrightDataJob[]) : [];
+  const jobs = records
+    .filter((r) => !r.error && r.job_posting_id && r.url)
+    .map(normalise)
+    .filter((j) => j.externalId && /^https?:\/\//i.test(j.applyUrl));
+  return { status: 'ready', jobs, records: records.length };
 };

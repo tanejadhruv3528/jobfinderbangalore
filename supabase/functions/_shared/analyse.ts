@@ -1,4 +1,4 @@
-// Turns raw Google Jobs listings into JobPins rows: drops spam and non-Bangalore
+// Turns raw LinkedIn listings into JobPins rows: drops spam and non-Bangalore
 // jobs, tags job type, experience and salary, and finds the office area for the pin.
 // Uses Claude when ANTHROPIC_API_KEY is set, and simple keyword rules otherwise.
 
@@ -28,7 +28,8 @@ const guessJobType = (job: RawJob): JobType => {
 };
 
 const analyseWithRules = (job: RawJob): Analysis => {
-  const inBangalore = /bengaluru|bangalore/i.test(`${job.location} ${job.description}`);
+  // LinkedIn often gives only the area, e.g. "Whitefield, Karnataka, India"
+  const inBangalore = /bengaluru|bangalore/i.test(`${job.location} ${job.description}`) || !!findAreaInText(job.location);
   return {
     keep: inBangalore && !!job.title && !!job.company && !!job.applyUrl,
     reason: inBangalore ? '' : 'not in Bangalore',
@@ -64,7 +65,7 @@ const SCHEMA = {
   },
 };
 
-const SYSTEM = `You review job listings found on Google Jobs for JobPins, a map of jobs in Bangalore.
+const SYSTEM = `You review job listings found on LinkedIn for JobPins, a map of jobs in Bangalore.
 For each listing return:
 - keep: false if the job is not based in Bangalore/Bengaluru (remote-only roles count as not based there), looks like spam, a scam, a training course, a paid placement scheme, or an MLM; true otherwise.
 - reason: a few words explaining keep=false, or "" when kept.
