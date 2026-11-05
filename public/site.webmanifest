@@ -1,0 +1,13 @@
+{
+  "name": "Jobpins",
+  "short_name": "Jobpins",
+  "description": "Find jobs on the map, a short ride from home.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0E1017",
+  "theme_color": "#0E1017",
+  "icons": [
+    { "src": "/jobpins-app-icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/jobpins-app-icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
