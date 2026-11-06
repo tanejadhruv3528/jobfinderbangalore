@@ -208,6 +208,67 @@
   stroke: var(--color-accent);
 }
 
+/* Count badge on a pin that holds several roles at one spot */
+.jp-pin-count {
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  display: none;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--color-mark);
+  color: var(--color-mark-ink);
+  border: 2px solid var(--color-accent);
+  font: 700 11px/16px var(--font-body);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  pointer-events: none;
+}
+
+.jp-pin.is-stack .jp-pin-count {
+  display: block;
+}
+
+.jp-pin.is-selected .jp-pin-count {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  border-color: var(--color-mark);
+}
+
+/* Roles from several companies: a stack icon instead of one company's initials */
+.jp-pin.is-mixed .jp-pin-label {
+  top: 8px;
+  display: flex;
+  justify-content: center;
+  line-height: 0;
+}
+
+.jp-pin.is-stack-hover {
+  transform: scale(1.18) translateY(-3px);
+}
+
+.jp-pin.is-stack-hover .jp-pin-tag {
+  display: block;
+}
+
+/* The list of roles at a stacked spot, kept above every pin */
+.jp-stack-popup {
+  z-index: 30;
+}
+
+.jp-stack-popup .mapboxgl-popup-content {
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.jp-stack-popup .mapboxgl-popup-tip {
+  display: none;
+}
+
 /* The tag over a hovered or selected pin. It is visible as soon as the pin carries the state, with no script needed */
 .jp-pin-tag {
   position: absolute;
